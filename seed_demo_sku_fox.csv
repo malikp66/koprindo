@@ -1,0 +1,11 @@
+id_outlet,nama_outlet,nama_cabang,nama_sku,qty_terjual,nilai_penjualan,sisa_stok_akhir,periode_laporan,wilayah
+ALF-001,Alfamart Merdeka,Cabang Bandung A,Korek FOX,150,450000,50,07-2026,Jawa Barat
+ALF-002,Alfamart Sudirman,Cabang Bandung A,Fox Gas Lighter,210,630000,20,07-2026,Jawa Barat
+ALF-003,Alfamart Dago,Cabang Bandung B,Korek Api Tokai,120,360000,10,07-2026,Jawa Barat
+ALF-004,Alfamart Pahlawan,Cabang Bandung B,FOX-001,500,1500000,150,07-2026,Jawa Barat
+ALF-005,Alfamart Antapani,Cabang Bandung C,FOX LIGHTER Biru,300,900000,45,07-2026,Jawa Barat
+ALF-006,Alfamart Buah Batu,Cabang Bandung C,Korek Mini Cricket,80,320000,5,07-2026,Jawa Barat
+IDM-001,Indomaret Cibiru,Cabang Bandung Timur,Korek Api FOX Premium,100,300000,12,07-2026,Jawa Barat
+IDM-002,Indomaret Ujung Berung,Cabang Bandung Timur,Fox Gas 50pcs,50,150000,40,07-2026,Jawa Barat
+AKS-001,Aksesmu Warung Mang Udin,Cabang Utama,KOREK FOX Grosir,400,1200000,80,07-2026,DKI Jakarta
+AKS-002,Aksesmu Toko Jaya,Cabang Utama,Korek Kijang Lighter,20,60000,5,07-2026,DKI Jakarta

@@ -1,0 +1,468 @@
+{
+  "name": "Koprindo Fox 2026 - Master Backend Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "id": "e6bd3ea9-0351-41db-8d13-0ef1bcd10abc",
+      "name": "Schedule Intake (FTP/Drive)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        150
+      ],
+      "notesInFlow": true,
+      "notes": "Workflow 1: Data Ingest"
+    },
+    {
+      "parameters": {
+        "url": "http://example.com/dummy-file.csv",
+        "options": {}
+      },
+      "id": "3be2f857-e160-4cd7-9dbd-bb3ef9a8cf68",
+      "name": "HTTP Download File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        450,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "options": {}
+      },
+      "id": "5dc46c3b-d54b-48af-91f1-331da294c794",
+      "name": "Read Spreadsheet",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 2,
+      "position": [
+        650,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst requiredFields = [\"channel\", \"sku_code\", \"qty_sell_out\"];\nlet blockingIssues = 0;\n\nitems.forEach(item => {\n  requiredFields.forEach(field => {\n    if (!item.json[field]) blockingIssues++;\n  });\n});\n\nreturn [{\n  json: {\n    batchId: \"b8a0-2f1d-n8n-gen\", \n    sourceType: \"sell_out\",\n    sourceParty: \"ritel_modern\",\n    periodMonth: 9,\n    periodYear: 2026,\n    fileName: \"data_sellout_indomaret.csv\",\n    fileChecksum: \"checksum_dummy\",\n    fileSizeBytes: 1024,\n    records: items.map(i => i.json),\n    qualityScore: blockingIssues > 0 ? 50 : 100,\n    blockingIssueCount: blockingIssues\n  }\n}];"
+      },
+      "id": "92dbd02b-8a8b-4c4f-9582-748ebf5139fb",
+      "name": "Validation Logic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        850,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/intake/batch",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "batchId",
+              "value": "={{$json.batchId}}"
+            },
+            {
+              "name": "sourceType",
+              "value": "={{$json.sourceType}}"
+            },
+            {
+              "name": "sourceParty",
+              "value": "={{$json.sourceParty}}"
+            },
+            {
+              "name": "periodMonth",
+              "value": "={{$json.periodMonth}}"
+            },
+            {
+              "name": "periodYear",
+              "value": "={{$json.periodYear}}"
+            },
+            {
+              "name": "fileName",
+              "value": "={{$json.fileName}}"
+            },
+            {
+              "name": "fileChecksum",
+              "value": "={{$json.fileChecksum}}"
+            },
+            {
+              "name": "fileSizeBytes",
+              "value": "={{$json.fileSizeBytes}}"
+            },
+            {
+              "name": "records",
+              "value": "={{$json.records}}"
+            },
+            {
+              "name": "qualityScore",
+              "value": "={{$json.qualityScore}}"
+            },
+            {
+              "name": "blockingIssueCount",
+              "value": "={{$json.blockingIssueCount}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "276859dd-b258-4db8-bbd0-e1b9b1e9d129",
+      "name": "Send API Intake",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1050,
+        150
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "e2baeb8c-f09b-4654-8c65-d60f4a86bccc",
+      "name": "Cron (Jam 2 Pagi)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        350
+      ],
+      "notesInFlow": true,
+      "notes": "Workflow 2: Reconciliation Variance"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  si.sku_code,\n  SUM(si.qty_sell_in) as total_in,\n  SUM(so.qty_sell_out) as total_out\nFROM sell_in_record si\nJOIN sell_out_record so ON si.sku_code = so.sku_code\nWHERE si.period_key = '2026-09'\nGROUP BY si.sku_code;\n"
+      },
+      "id": "b1b0b5de-8c8a-4db3-96b4-2bda1f0d3a51",
+      "name": "Postgres: Variance Join",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        450,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet riskEvents = [];\n\nitems.forEach(item => {\n   let total_in = parseFloat(item.json.total_in);\n   let total_out = parseFloat(item.json.total_out);\n   let variance = (total_in - total_out) / total_in;\n\n   if(variance > 0.5) {\n      riskEvents.push({ periodKey: \"2026-09\", riskType: \"sell_in_sell_out_mismatch\", severity: \"critical\", entityType: \"sku\", entityKey: item.json.sku_code, metricName: \"variance\", observedValue: variance, thresholdValue: 0.50 });\n   } else if (variance > 0.3) {\n      riskEvents.push({ periodKey: \"2026-09\", riskType: \"sell_in_sell_out_mismatch\", severity: \"high\", entityType: \"sku\", entityKey: item.json.sku_code, metricName: \"variance\", observedValue: variance, thresholdValue: 0.30 });\n   }\n});\n\nreturn riskEvents.map(e => ({json: e}));"
+      },
+      "id": "e2f18f9e-c88f-4ed7-94a2-e6e2e5057b32",
+      "name": "Calc Variance Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/intake/risk-event",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "edbb97e5-1811-47fb-89c0-9a3d4f131a39",
+      "name": "API Send Risk Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        850,
+        350
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 1 * * *"
+            }
+          ]
+        }
+      },
+      "id": "ab704403-12ba-4b7f-baf3-0e86b240afb1",
+      "name": "Cron (Jam 1 Pagi)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        550
+      ],
+      "notesInFlow": true,
+      "notes": "Workflow 3: Auto Aging DB"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE payment_record \nSET payment_status = 'overdue',\n    aging_bucket = CASE \n      WHEN (CURRENT_DATE - due_date) <= 30 THEN '0_30'\n      WHEN (CURRENT_DATE - due_date) <= 45 THEN '31_45'\n      ELSE '46_60'\n    END\nWHERE payment_status IN ('unpaid', 'partial') AND due_date < CURRENT_DATE;\n"
+      },
+      "id": "4d142ab1-030a-4712-ba53-62a9cba2ecca",
+      "name": "Postgres (Update Overdue)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        450,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "escalation-alert",
+        "options": {}
+      },
+      "id": "1be68b57-a36c-48c0-bc66-3d7f02cdff0c",
+      "name": "Push Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        750
+      ],
+      "notesInFlow": true,
+      "notes": "Workflow 4: Notification Alerts",
+      "webhookId": "9740dc33-fd4a-40a1-8d26-b8cb79be6a8d"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.severity }}",
+                    "rightValue": "high",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.severity }}",
+                    "rightValue": "critical",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9dc9a3b6-20d0-4bf6-b5eb-7be696c7db90",
+      "name": "Severity Check Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 2.1,
+      "position": [
+        450,
+        750
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "#ops-high",
+        "text": "=Peringatan High Risk!\nIsu: {{$json.riskType}}\nDimana: {{$json.entityKey}}\nValue: {{$json.observedValue}}"
+      },
+      "id": "ff9b73f7-9ab0-4251-bef5-21fb9d18b67b",
+      "name": "Slack (High)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "channel": "#management-critical",
+        "text": "=KRITIKAL RISK!\nIsu: {{$json.riskType}}\nDimana: {{$json.entityKey}}\nValue: {{$json.observedValue}}"
+      },
+      "id": "fb21b4a0-53bc-42b7-a3ee-82a170fb22ea",
+      "name": "Slack (Critical)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        800
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Intake (FTP/Drive)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Download File": {
+      "main": [
+        [
+          {
+            "node": "Read Spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "Validation Logic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Logic": {
+      "main": [
+        [
+          {
+            "node": "Send API Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron (Jam 2 Pagi)": {
+      "main": [
+        [
+          {
+            "node": "Postgres: Variance Join",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: Variance Join": {
+      "main": [
+        [
+          {
+            "node": "Calc Variance Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calc Variance Log": {
+      "main": [
+        [
+          {
+            "node": "API Send Risk Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron (Jam 1 Pagi)": {
+      "main": [
+        [
+          {
+            "node": "Postgres (Update Overdue)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Push Webhook": {
+      "main": [
+        [
+          {
+            "node": "Severity Check Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Severity Check Switch": {
+      "main": [
+        [
+          {
+            "node": "Slack (High)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack (Critical)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "df16b6bb-fdf5-4acc-adae-8de5a9a16f6b",
+  "meta": {
+    "instanceId": "local-dev"
+  },
+  "id": "tD2vI1K2pBAsV9kZ",
+  "tags": []
+}

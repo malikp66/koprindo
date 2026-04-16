@@ -1,0 +1,11 @@
+id_outlet,nama_outlet,nama_cabang,nama_sku,qty_terjual,nilai_penjualan,sisa_stok_akhir,periode_laporan,wilayah
+ALF-001,Alfamart Merdeka,Cabang Bandung A,Beras Premium 5kg,120,7200000,45,07-2026,Jawa Barat
+ALF-002,Alfamart Sudirman,Cabang Bandung A,Beras Rojolele Wangi 5kg,85,5100000,12,07-2026,Jawa Barat
+ALF-003,Alfamart Dago,Cabang Bandung B,Minyak Goreng Bimoli 2L,200,4000000,50,07-2026,Jawa Barat
+ALF-004,Alfamart Pahlawan,Cabang Bandung B,Gula Pasir Gulaku 1kg,150,2250000,30,07-2026,Jawa Barat
+ALF-005,Alfamart Antapani,Cabang Bandung C,Beras Setra Ramos 5kg,300,18000000,10,07-2026,Jawa Barat
+ALF-006,Alfamart Buah Batu,Cabang Bandung C,Tepung Terigu Segitiga Biru 1kg,100,1000000,80,07-2026,Jawa Barat
+IDM-001,Indomaret Cibiru,Cabang Bandung Timur,Beras Maknyus 5kg,60,3600000,20,07-2026,Jawa Barat
+IDM-002,Indomaret Ujung Berung,Cabang Bandung Timur,Beras Pandan Wangi 5kg,90,5850000,5,07-2026,Jawa Barat
+AKS-001,Aksesmu Warung Mang Udin,Cabang Utama,Beras Curah 1kg,50,600000,15,07-2026,DKI Jakarta
+AKS-002,Aksesmu Toko Jaya,Cabang Utama,Kopi Kapal Api 165g,100,1500000,25,07-2026,DKI Jakarta
