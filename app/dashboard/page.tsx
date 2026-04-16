@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { SelloutChartPanel } from "@/components/dashboard/chart-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { demoScenario, foxModernRetailStrategy, foxProductPortfolio } from "@/lib/mock-data";
+import { demoScenario } from "@/lib/mock-data";
 
 // Metric cards — data berbasis PRD Koprindo FOX 2026
 const cards = [
@@ -146,68 +146,6 @@ export default function DashboardPage() {
                 <div className="tabular text-sm font-semibold text-foreground">
                   Rp{item.price}
                 </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[1.14fr_0.86fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Arsitektur Produk FOX</CardTitle>
-            <CardDescription>
-              Portofolio disusun dari lini entry sampai utility berdasarkan SKU publik yang konsisten muncul.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3">
-            {foxProductPortfolio.map((item) => (
-              <div key={item.title} className="rounded-2xl border border-border/25 bg-accent/20 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{item.title}</p>
-                    <p className="mt-1 text-xs font-medium text-muted-foreground">{item.priceBand}</p>
-                  </div>
-                  <Badge variant={item.badgeVariant}>{item.modernRetailTag}</Badge>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {item.skus.map((sku) => (
-                    <span
-                      key={sku}
-                      className="rounded-full border border-border/40 bg-white/90 px-3 py-1 text-xs font-medium text-foreground"
-                    >
-                      {sku}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.positioning}</p>
-                <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                  <p><span className="font-medium text-foreground">Channel utama:</span> {item.channels}</p>
-                  <p><span className="font-medium text-foreground">Peran di modern retail:</span> {item.modernRetailRole}</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Playbook Ritel Modern</CardTitle>
-            <CardDescription>
-              Versi paling tajam untuk prioritas listing nasional dan trade-up SKU FOX.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {foxModernRetailStrategy.map((item) => (
-              <div key={item.title} className="rounded-2xl border border-border/25 bg-accent/20 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-foreground">{item.title}</p>
-                  <Badge variant={item.title === "Core SKU" ? "success" : item.title === "Test trade-up SKU" ? "warning" : "neutral"}>
-                    {item.title === "Core SKU" ? "Fokus" : item.title === "Test trade-up SKU" ? "Uji" : "Selektif"}
-                  </Badge>
-                </div>
-                <p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{item.skus}</p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.note}</p>
               </div>
             ))}
           </CardContent>

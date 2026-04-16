@@ -39,7 +39,7 @@ export function LayoutHeader({
             <Boxes className="h-4 w-4" />
           </div>
           <div className="min-w-0">
-            <h2 className="truncate text-xl font-semibold tracking-tight text-foreground">Pusat Kendali FOX</h2>
+            <h2 className="truncate text-xl font-semibold tracking-tight text-foreground">FOX Monitoring</h2>
           </div>
         </div>
       </div>

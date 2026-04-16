@@ -32,7 +32,7 @@ export function Sidebar({
           </div>
           {(!collapsed || mobile) && (
             <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold">Pusat Kendali FOX</h1>
+              <h1 className="truncate text-base font-semibold">FOX Monitoring</h1>
               <p className="mt-0.5 text-xs text-muted-foreground">Pemantauan operasional dan pelaporan</p>
             </div>
           )}
