@@ -26,7 +26,7 @@ function MetricDelta({ delta }: { delta: string }) {
 }
 
 function MetricIcon({ label, tone }: { label: string; tone: StatusTone }) {
-  if (label.toLowerCase().includes("revenue")) return <CircleDollarSign className="h-4.5 w-4.5" />;
+  if (label.toLowerCase().includes("pendapatan")) return <CircleDollarSign className="h-4.5 w-4.5" />;
   if (label.toLowerCase().includes("outlet") || label.toLowerCase().includes("aktif")) return <UsersRound className="h-4.5 w-4.5" />;
   if (tone === "danger") return <AlertTriangle className="h-4.5 w-4.5" />;
   if (tone === "warning") return <Waves className="h-4.5 w-4.5" />;
@@ -35,7 +35,7 @@ function MetricIcon({ label, tone }: { label: string; tone: StatusTone }) {
 }
 
 function iconBgColor(tone: StatusTone, label: string): string {
-  if (label.toLowerCase().includes("revenue")) return "border border-sky-200/70 bg-sky-50 text-slate-900";
+  if (label.toLowerCase().includes("pendapatan")) return "border border-sky-200/70 bg-sky-50 text-slate-900";
   if (label.toLowerCase().includes("outlet") || label.toLowerCase().includes("aktif")) return "border border-sky-200/70 bg-sky-50 text-slate-900";
   if (tone === "danger") return "border border-rose-200/80 bg-rose-50 text-rose-500";
   if (tone === "warning") return "border border-amber-200/80 bg-amber-50 text-amber-600";
@@ -74,18 +74,18 @@ function metricSignal(label: string, value: string, delta: string) {
     };
   }
 
-  if (label.toLowerCase().includes("revenue")) {
+  if (label.toLowerCase().includes("pendapatan")) {
     return {
-      summary: `Revenue aktif berada di ${value} dengan perubahan ${delta}, masih sejalan dengan posture sell-out dan mix channel.`,
+      summary: `Pendapatan saat ini berada di ${value} dengan perubahan ${delta}, masih sejalan dengan pola penjualan dan komposisi channel.`,
       confidence: "92% confidence",
-      status: "Financial view synced",
+      status: "Tampilan keuangan sinkron",
       reasoning: [
-        "AI mengaitkan revenue dengan profit mix channel dan batch payment yang sudah tervalidasi agar tidak terjadi headline yang menyesatkan.",
-        "Anomali minor pada payment evidence tidak memblokir headline revenue, tetapi tetap dicatat di control layer.",
+        "AI mengaitkan pendapatan dengan komposisi channel dan batch pembayaran yang sudah tervalidasi agar angka utama tetap akurat.",
+        "Anomali kecil pada bukti pembayaran tidak memblokir angka pendapatan, tetapi tetap dicatat pada lapisan kendali.",
       ],
       sources: ["sell_out_record", "payment_record", "executive_report"],
-      decisionRule: "Revenue headline hanya ditampilkan dari batch published atau provisional yang sudah diberi flag jelas.",
-      recommendedAction: "Bandingkan revenue ini dengan aging exposure untuk memastikan pertumbuhan tidak menambah risiko arus kas.",
+      decisionRule: "Angka pendapatan utama hanya ditampilkan dari batch terbit atau batch sementara yang sudah diberi penanda jelas.",
+      recommendedAction: "Bandingkan pendapatan ini dengan paparan umur piutang agar pertumbuhan tidak menambah risiko arus kas.",
     };
   }
 
@@ -139,14 +139,13 @@ export function MetricCard({
                 <MetricDelta delta={delta} />
               </span>
               <span className={negative ? "font-medium text-rose-500" : "font-medium text-emerald-500"}>{delta}</span>
-              <span className="text-muted-foreground">vs Last Week</span>
             </div>
             <button
               type="button"
               className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
               onClick={() => setDetailOpen(true)}
             >
-              <span>Explain Signal</span>
+              <span>Lihat penjelasan</span>
               <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
           </div>

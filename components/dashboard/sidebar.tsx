@@ -32,8 +32,8 @@ export function Sidebar({
           </div>
           {(!collapsed || mobile) && (
             <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold">FOX Control Tower</h1>
-              <p className="mt-0.5 text-xs text-muted-foreground">Operational control and reporting</p>
+              <h1 className="truncate text-base font-semibold">Pusat Kendali FOX</h1>
+              <p className="mt-0.5 text-xs text-muted-foreground">Pemantauan operasional dan pelaporan</p>
             </div>
           )}
         </div>
@@ -77,7 +77,7 @@ export function Sidebar({
 
       <nav className="mt-6 space-y-0.5 border-t border-border/30 pt-5">
         {(!collapsed || mobile) && (
-          <p className="px-3 pb-2 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/50">Admin</p>
+          <p className="px-3 pb-2 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/50">Pengaturan</p>
         )}
         {adminItems.map((item) => {
           const Icon = item.icon;
@@ -110,10 +110,10 @@ export function Sidebar({
         <div className="mt-auto rounded-2xl border border-border/30 bg-accent/20 p-4">
           <div className="flex items-center gap-2 text-sm font-medium">
             <CircleDot className="h-4 w-4 text-amber-500" />
-            Quality gate perlu tindak lanjut
+            Perlu tindak lanjut hari ini
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Batch Indomaret masih provisional dan AksesMu perlu melengkapi periode aktif sebelum siklus laporan ditutup.
+            Indomaret masih perlu kirim ulang file yang lebih rapi dan AksesMu belum upload periode aktif.
           </p>
         </div>
       )}

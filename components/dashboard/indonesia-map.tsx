@@ -223,13 +223,13 @@ export function IndonesiaMap({ activeProvince, onProvinceSelect }: IndonesiaMapP
           }}
         >
           <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#71815c]">
-            Province Active
+            Provinsi Aktif
           </div>
           <div className="mt-1 text-sm font-semibold text-foreground">{tooltip.province.label}</div>
           <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-muted-foreground">
             <span>Sell-out</span>
             <span className="text-right font-medium text-foreground">{tooltip.province.revenue}</span>
-            <span>Growth</span>
+            <span>Pertumbuhan</span>
             <span className="text-right font-medium text-foreground">{tooltip.province.growth}</span>
           </div>
         </div>

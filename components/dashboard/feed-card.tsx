@@ -9,8 +9,8 @@ export function AnomalyFeedCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Anomaly & Action Center</CardTitle>
-        <CardDescription>Daftar anomaly prioritas untuk ditindaklanjuti hari ini.</CardDescription>
+        <CardTitle>Pusat Anomali dan Tindakan</CardTitle>
+        <CardDescription>Daftar anomali prioritas yang perlu ditindaklanjuti hari ini.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {anomalyFeed.map((item) => (

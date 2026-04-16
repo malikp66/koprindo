@@ -27,25 +27,41 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import { registrationQueue, registrationStats, userDirectory } from "@/lib/mock-data";
 
 type RegistrationRow = (typeof registrationQueue)[number];
 
-const governanceMetrics = [
-  { label: "Pending Review", value: "12", note: "Persetujuan user baru" },
-  { label: "Role Coverage", value: "22 akun", note: "Internal dan partner aktif" },
-  { label: "Connector Readiness", value: "3 siap integrasi", note: "State orkestrasi dan sinkronisasi" },
-  { label: "Policy Breach", value: "0", note: "Belum ada threshold kritis" },
+const summaryCards = [
+  { label: "Permintaan baru", value: "12", note: "Pengguna baru menunggu keputusan" },
+  { label: "Akun aktif", value: "22 akun", note: "Dipakai oleh tim internal dan mitra" },
+  { label: "Integrasi aktif", value: "3 layanan", note: "Dipakai untuk reminder dan laporan" },
+  { label: "Perlu revisi", value: "3 akun", note: "Masih perlu data tambahan" },
 ];
 
 const connectorCards = [
-  { title: "n8n Workflow", status: "Ready for orchestration", note: "Workflow event sudah dipetakan untuk intake, reminder, dan reporting.", tone: "info" as const },
-  { title: "Google Sheets", status: "Connected", note: "Disiapkan untuk batch intake dan pelaporan berkala.", tone: "success" as const },
-  { title: "WhatsApp Gateway", status: "Queued for activation", note: "Disiapkan untuk reminder upload dan aging payment.", tone: "warning" as const },
-  { title: "Storage / Parser", status: "Awaiting activation", note: "Struktur batch dan quality gate sudah siap menerima parser dan storage service.", tone: "neutral" as const },
+  { title: "Pengingat upload", status: "Aktif", note: "Reminder untuk PIC channel berjalan sesuai jadwal kerja harian.", tone: "success" as const },
+  { title: "Ringkasan laporan", status: "Aktif", note: "Distribusi laporan internal berjalan otomatis setiap pagi.", tone: "success" as const },
+  { title: "Pengingat piutang", status: "Perlu dicek", note: "Satu jalur notifikasi finance masih perlu konfirmasi.", tone: "warning" as const },
+  { title: "Sinkron spreadsheet", status: "Siap", note: "Masih siap dipakai untuk unggahan dan rekap operasional.", tone: "info" as const },
 ];
+
+function approvalLabel(value: RegistrationRow["approval"]) {
+  if (value === "Pending Review") return "Menunggu review";
+  if (value === "Needs Revision") return "Perlu revisi";
+  return value;
+}
+
+function approvalTone(value: RegistrationRow["approval"]) {
+  if (value === "Pending Review") return "warning";
+  if (value === "Needs Revision") return "danger";
+  return "neutral";
+}
+
+function userStatusLabel(value: (typeof userDirectory)[number]["status"]) {
+  return value === "Active" ? "Aktif" : value;
+}
 
 export default function AdminPage() {
   const [selectedRegistration, setSelectedRegistration] = React.useState<RegistrationRow>(registrationQueue[0]);
@@ -54,19 +70,10 @@ export default function AdminPage() {
   React.useEffect(() => {
     const syncFromHash = () => {
       const hash = window.location.hash.replace("#", "");
-      if (hash === "integrasi") {
-        setActiveTab("connectors");
-        return;
-      }
-      if (hash === "pengaturan") {
-        setActiveTab("policy");
-        return;
-      }
-      if (hash === "pengguna") {
-        setActiveTab("users");
-        return;
-      }
-      setActiveTab("approvals");
+      if (hash === "integrasi") return setActiveTab("connectors");
+      if (hash === "pengaturan") return setActiveTab("settings");
+      if (hash === "pengguna") return setActiveTab("users");
+      return setActiveTab("approvals");
     };
 
     syncFromHash();
@@ -76,13 +83,13 @@ export default function AdminPage() {
 
   const registrationColumns: ColumnDef<RegistrationRow>[] = [
     { accessorKey: "name", header: () => <SortableHeader label="Nama" />, cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
-    { accessorKey: "type", header: "Tipe User" },
+    { accessorKey: "type", header: "Tipe Pengguna" },
     { accessorKey: "org", header: "Organisasi" },
-    { accessorKey: "role", header: "Role" },
+    { accessorKey: "role", header: "Peran" },
     { accessorKey: "whatsapp", header: "WA" },
     { accessorKey: "email", header: "Email" },
     { accessorKey: "otp", header: "OTP", cell: ({ row }) => <Badge variant="info">{row.original.otp}</Badge> },
-    { accessorKey: "approval", header: "Approval", cell: ({ row }) => <Badge variant={row.original.approval === "Pending Review" ? "warning" : "danger"}>{row.original.approval}</Badge> },
+    { accessorKey: "approval", header: "Status", cell: ({ row }) => <Badge variant={toneToBadge(approvalTone(row.original.approval))}>{approvalLabel(row.original.approval)}</Badge> },
   ];
 
   const userColumns: ColumnDef<(typeof userDirectory)[number]>[] = [
@@ -90,20 +97,20 @@ export default function AdminPage() {
     { accessorKey: "name", header: () => <SortableHeader label="Nama" />, cell: ({ row }) => <span className="font-medium">{row.original.name}</span> },
     { accessorKey: "type", header: "Tipe" },
     { accessorKey: "unit", header: "Unit" },
-    { accessorKey: "role", header: "Role" },
-    { accessorKey: "status", header: "Status", cell: ({ row }) => <Badge variant="success">{row.original.status}</Badge> },
-    { accessorKey: "lastActivity", header: () => <SortableHeader label="Last Activity" /> },
+    { accessorKey: "role", header: "Peran" },
+    { accessorKey: "status", header: "Status", cell: ({ row }) => <Badge variant="success">{userStatusLabel(row.original.status)}</Badge> },
+    { accessorKey: "lastActivity", header: () => <SortableHeader label="Aktivitas Terakhir" /> },
   ];
 
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Governance"
-        title="Access Control and Governance"
-        description="Workspace governance untuk approval pengguna, role mapping, kesiapan integrasi, dan policy threshold agar operasi control tower tetap terkendali."
+        eyebrow="Admin"
+        title="Kelola Pengguna, Akses, dan Pengaturan Kerja"
+        description="Halaman ini dipakai untuk menyetujui pengguna baru, melihat akun aktif, mengecek layanan pendukung, dan mengatur kebiasaan kerja harian tim."
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => toast.success("Export direktori diproses", { description: "Download file CSV akan dimulai." })}>Export Directory</Button>
+            <Button variant="outline" onClick={() => toast.success("Direktori pengguna sedang disiapkan")}>Ekspor Direktori</Button>
             <Dialog>
               <DialogTrigger asChild>
                 <Button className="gap-2">
@@ -113,16 +120,14 @@ export default function AdminPage() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Tambah Pengguna</DialogTitle>
-                  <DialogDescription>Buat akun baru untuk koordinator internal, finance, konsultan, atau PIC ritel.</DialogDescription>
+                  <DialogTitle>Tambah pengguna</DialogTitle>
+                  <DialogDescription>Buat akun baru untuk tim internal, finance, konsultan, atau PIC ritel.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Input placeholder="Nama lengkap" />
                   <Input placeholder="Email" />
                   <Select defaultValue="internal">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Tipe pengguna" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Tipe pengguna" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="internal">Koordinator Internal</SelectItem>
                       <SelectItem value="ritel">PIC Ritel</SelectItem>
@@ -132,8 +137,8 @@ export default function AdminPage() {
                   <Input placeholder="Nomor WhatsApp" />
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => toast.info("Undangan dibatalkan")}>Batal</Button>
-                  <Button onClick={() => toast.promise(new Promise((resolve) => setTimeout(resolve, 1500)), { loading: "Menyimpan...", success: "Undangan dikirim ke email tujuan." })}>Simpan</Button>
+                  <Button variant="outline" onClick={() => toast.info("Pembuatan pengguna dibatalkan")}>Batal</Button>
+                  <Button onClick={() => toast.success("Undangan berhasil dikirim")}>Simpan</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -142,7 +147,7 @@ export default function AdminPage() {
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {governanceMetrics.map((item) => (
+        {summaryCards.map((item) => (
           <Card key={item.label}>
             <CardContent className="p-5">
               <div className="text-xs font-medium text-muted-foreground">{item.label}</div>
@@ -155,10 +160,10 @@ export default function AdminPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="approvals">Approvals</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="connectors">Connectors</TabsTrigger>
-          <TabsTrigger value="policy">Policy</TabsTrigger>
+          <TabsTrigger value="approvals">Persetujuan</TabsTrigger>
+          <TabsTrigger value="users">Pengguna</TabsTrigger>
+          <TabsTrigger value="connectors">Integrasi</TabsTrigger>
+          <TabsTrigger value="settings">Pengaturan</TabsTrigger>
         </TabsList>
 
         <TabsContent value="approvals" className="space-y-6">
@@ -181,21 +186,19 @@ export default function AdminPage() {
           <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
             <Card>
               <CardHeader>
-                <CardTitle>Approval Queue</CardTitle>
-                <CardDescription>Antrean approval untuk menjaga akses sistem tetap terkontrol sejak tahap implementasi awal hingga operasional penuh.</CardDescription>
+                <CardTitle>Antrean persetujuan</CardTitle>
+                <CardDescription>Buka permintaan baru, cek identitas dan peran pengguna, lalu putuskan apakah akun bisa langsung diaktifkan.</CardDescription>
               </CardHeader>
               <CardContent>
                 <DataTable
                   columns={registrationColumns}
                   data={registrationQueue}
-                  searchPlaceholder="Cari applicant..."
+                  searchPlaceholder="Cari nama atau organisasi..."
                   onRowClick={setSelectedRegistration}
                   toolbar={
                     <>
                       <Select defaultValue="all">
-                        <SelectTrigger className="w-[160px]">
-                          <SelectValue placeholder="Tipe user" />
-                        </SelectTrigger>
+                        <SelectTrigger className="w-[160px]"><SelectValue placeholder="Tipe user" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Semua Tipe</SelectItem>
                           <SelectItem value="internal">Internal</SelectItem>
@@ -203,12 +206,10 @@ export default function AdminPage() {
                         </SelectContent>
                       </Select>
                       <Select defaultValue="pending">
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Status approval" />
-                        </SelectTrigger>
+                        <SelectTrigger className="w-[180px]"><SelectValue placeholder="Status" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pending">Pending Review</SelectItem>
-                          <SelectItem value="revision">Needs Revision</SelectItem>
+                          <SelectItem value="pending">Menunggu review</SelectItem>
+                          <SelectItem value="revision">Perlu revisi</SelectItem>
                         </SelectContent>
                       </Select>
                     </>
@@ -219,43 +220,36 @@ export default function AdminPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Review Decision</CardTitle>
-                <CardDescription>Panel review untuk keputusan akses, verifikasi identitas, dan penetapan role pengguna.</CardDescription>
+                <CardTitle>Keputusan untuk pengaju terpilih</CardTitle>
+                <CardDescription>Panel kanan merangkum informasi utama agar admin bisa cepat memutuskan akun ini disetujui, direvisi, atau ditolak.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="rounded-2xl border border-border/25 bg-accent/20 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm text-muted-foreground">Applicant</p>
+                      <p className="text-sm text-muted-foreground">Pengaju</p>
                       <h3 className="mt-2 text-xl tracking-tight text-foreground">{selectedRegistration.name}</h3>
                     </div>
-                    <Badge variant={selectedRegistration.approval === "Pending Review" ? "warning" : "danger"}>
-                      {selectedRegistration.approval}
-                    </Badge>
+                    <Badge variant={toneToBadge(approvalTone(selectedRegistration.approval))}>{approvalLabel(selectedRegistration.approval)}</Badge>
                   </div>
                 </div>
                 {[
-                  ["Tipe", selectedRegistration.type],
+                  ["Tipe pengguna", selectedRegistration.type],
                   ["Organisasi", selectedRegistration.org],
-                  ["Jabatan", selectedRegistration.role],
-                  ["OTP Status", selectedRegistration.otp],
+                  ["Peran", selectedRegistration.role],
+                  ["Status OTP", selectedRegistration.otp],
                   ["Email", selectedRegistration.email],
+                  ["Catatan admin", selectedRegistration.approval === "Needs Revision" ? "Minta pengaju melengkapi data atau memperjelas kebutuhan akses." : "Data cukup untuk diproses selama peran dan organisasinya sesuai."],
                 ].map(([label, value]) => (
                   <div key={label} className="kv-row">
                     <span className="text-sm text-muted-foreground">{label}</span>
-                    <span className="text-sm font-medium text-foreground">{value}</span>
+                    <span className="max-w-[56%] text-right text-sm font-medium text-foreground">{value}</span>
                   </div>
                 ))}
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <Button className="gap-2" onClick={() => toast.success("Akses disetujui")}>
-                    <CheckCircle2 data-icon="inline-start" /> Setujui
-                  </Button>
-                  <Button variant="secondary" className="gap-2" onClick={() => toast.info("Meminta revisi dokumen")}>
-                    <Clock3 data-icon="inline-start" /> Revisi
-                  </Button>
-                  <Button variant="destructive" className="gap-2" onClick={() => toast.error("Permintaan akses ditolak")}>
-                    <CircleX data-icon="inline-start" /> Tolak
-                  </Button>
+                  <Button className="gap-2" onClick={() => toast.success("Akses disetujui")}><CheckCircle2 data-icon="inline-start" /> Setujui</Button>
+                  <Button variant="secondary" className="gap-2" onClick={() => toast.info("Permintaan revisi dikirim")}><Clock3 data-icon="inline-start" /> Minta revisi</Button>
+                  <Button variant="destructive" className="gap-2" onClick={() => toast.error("Permintaan ditolak")}><CircleX data-icon="inline-start" /> Tolak</Button>
                 </div>
               </CardContent>
             </Card>
@@ -266,22 +260,20 @@ export default function AdminPage() {
           <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
             <Card>
               <CardHeader>
-                <CardTitle>User Directory</CardTitle>
-                <CardDescription>Direktori akun aktif untuk internal Koprindo, partner, dan PIC ritel yang akan memakai sistem ini.</CardDescription>
+                <CardTitle>Direktori pengguna aktif</CardTitle>
+                <CardDescription>Lihat siapa saja yang sudah aktif memakai sistem dan kapan terakhir kali mereka mengakses halaman kerja.</CardDescription>
               </CardHeader>
               <CardContent>
                 <DataTable
                   columns={userColumns}
                   data={userDirectory}
-                  searchPlaceholder="Cari user aktif..."
+                  searchPlaceholder="Cari nama atau unit..."
                   toolbar={
                     <Select defaultValue="all">
-                      <SelectTrigger className="w-[160px]">
-                        <SelectValue placeholder="Status akun" />
-                      </SelectTrigger>
+                      <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status akun" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Semua Status</SelectItem>
-                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="active">Aktif</SelectItem>
                       </SelectContent>
                     </Select>
                   }
@@ -291,14 +283,14 @@ export default function AdminPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Role and Access Notes</CardTitle>
-                <CardDescription>Kontrol minimum yang perlu dijaga untuk operasi campuran executive dan operasional.</CardDescription>
+                <CardTitle>Catatan peran dan akses</CardTitle>
+                <CardDescription>Tiga hal utama yang perlu dijaga agar akun yang aktif tetap sesuai kebutuhan kerja.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {[
-                  { icon: ShieldAlert, title: "Approval SLA", note: "Target review maksimum 24 jam sejak submit." },
-                  { icon: CheckCircle2, title: "Role mapping", note: "Konsultan, admin, finance, dan PIC ritel memiliki hak akses view yang berbeda." },
-                  { icon: Clock3, title: "Ownership", note: "Semua channel punya owner yang jelas untuk upload, exception, dan laporan." },
+                  { icon: ShieldAlert, title: "SLA persetujuan", note: "Usahakan permintaan akun baru diputuskan maksimal 24 jam." },
+                  { icon: CheckCircle2, title: "Pemetaan peran", note: "Pastikan hak akses sesuai tugas: admin, finance, operasional, atau PIC ritel." },
+                  { icon: Clock3, title: "Kepemilikan tugas", note: "Setiap channel perlu punya PIC yang jelas untuk upload, retur, dan laporan." },
                 ].map((item) => (
                   <div key={item.title} className="rounded-2xl border border-border/25 bg-accent/20 p-4">
                     <item.icon className="h-5 w-5 text-primary" />
@@ -314,8 +306,8 @@ export default function AdminPage() {
         <TabsContent value="connectors">
           <Card>
             <CardHeader>
-              <CardTitle>Connector Readiness</CardTitle>
-              <CardDescription>Kesiapan integrasi yang dipetakan dari sisi orkestrasi, storage, reminder, dan pelaporan.</CardDescription>
+              <CardTitle>Status layanan pendukung</CardTitle>
+              <CardDescription>Cek apakah reminder, pengiriman laporan, dan layanan pendukung lain masih siap dipakai oleh tim setiap hari.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               {connectorCards.map((item) => (
@@ -334,17 +326,17 @@ export default function AdminPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="policy">
+        <TabsContent value="settings">
           <Card>
             <CardHeader>
-              <CardTitle>Policy and Threshold</CardTitle>
-              <CardDescription>Panel ringkas untuk threshold quality gate, SLA approval, dan preferensi notifikasi operasional.</CardDescription>
+              <CardTitle>Pengaturan kerja harian</CardTitle>
+              <CardDescription>Atur kebiasaan operasional yang sering dipakai tim, mulai dari jam kirim laporan sampai pengingat piutang.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
-              <Input defaultValue="24 jam" aria-label="approval sla" />
-              <Input defaultValue="07:00 WIB" aria-label="scheduler report" />
-              <Input defaultValue="Quality score minimum 85" aria-label="quality gate" />
-              <Input defaultValue="Reminder aging 3 hari sebelum jatuh tempo" aria-label="aging reminder" />
+              <Input defaultValue="Batas review akun baru: 24 jam" aria-label="approval sla" />
+              <Input defaultValue="Jadwal kirim laporan: 07:00 WIB" aria-label="report schedule" />
+              <Input defaultValue="Pengingat upload: pukul 09:00 WIB" aria-label="upload reminder" />
+              <Input defaultValue="Pengingat piutang: 3 hari sebelum jatuh tempo" aria-label="aging reminder" />
             </CardContent>
           </Card>
         </TabsContent>

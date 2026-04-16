@@ -23,8 +23,8 @@ export function PageHeader({
               {meta}
             </div>
           )}
-          <h1 className="mt-3 text-[1.85rem] leading-tight text-balance text-foreground sm:text-[2.15rem] xl:text-[2.35rem]">{title}</h1>
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-muted-foreground">{description}</p>
+          <h1 className="mt-3 text-[1.95rem] leading-[1.08] text-balance text-foreground sm:text-[2.2rem] xl:text-[2.45rem]">{title}</h1>
+          <p className="mt-3 max-w-3xl text-[1.02rem] leading-[1.75] text-muted-foreground">{description}</p>
         </div>
         {actions ? <div className="flex flex-wrap gap-3 xl:justify-end">{actions}</div> : null}
       </div>

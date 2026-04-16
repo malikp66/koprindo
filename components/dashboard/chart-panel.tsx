@@ -19,14 +19,14 @@ const revenueSeries = [
   { month: "Feb", alfamart: 32000, aksesmu: 21000, indomaret: 29000 },
   { month: "Mar", alfamart: 25000, aksesmu: 15000, indomaret: 21000 },
   { month: "Apr", alfamart: 18000, aksesmu: 11000, indomaret: 15000 },
-  { month: "May", alfamart: 42643.24, aksesmu: 24000, indomaret: 32000 },
+  { month: "Mei", alfamart: 42643.24, aksesmu: 24000, indomaret: 32000 },
   { month: "Jun", alfamart: 38000, aksesmu: 26000, indomaret: 34000 },
   { month: "Jul", alfamart: 15000, aksesmu: 9000, indomaret: 12000 },
-  { month: "Aug", alfamart: 30000, aksesmu: 18000, indomaret: 26000 },
+  { month: "Agu", alfamart: 30000, aksesmu: 18000, indomaret: 26000 },
   { month: "Sep", alfamart: 17000, aksesmu: 11000, indomaret: 15000 },
-  { month: "Oct", alfamart: 31000, aksesmu: 19000, indomaret: 27000 },
+  { month: "Okt", alfamart: 31000, aksesmu: 19000, indomaret: 27000 },
   { month: "Nov", alfamart: 13000, aksesmu: 8000, indomaret: 11000 },
-  { month: "Dec", alfamart: 19000, aksesmu: 12000, indomaret: 17000 },
+  { month: "Des", alfamart: 19000, aksesmu: 12000, indomaret: 17000 },
 ];
 
 const channelContext = {
@@ -54,28 +54,25 @@ const currencyFormatter = new Intl.NumberFormat("id-ID", {
 });
 
 export function SelloutChartPanel() {
-  const [activeMonth, setActiveMonth] = React.useState("May");
+  const [activeMonth, setActiveMonth] = React.useState("Mei");
 
   return (
     <Card>
       <CardHeader className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="pr-12 lg:pr-0">
-          <CardTitle className="text-xl tracking-tight text-foreground">Total Profit Overview</CardTitle>
+          <CardTitle className="text-xl tracking-tight text-foreground">Ringkasan Penjualan dan Pendapatan</CardTitle>
           <div className="mt-4 flex items-center gap-3">
             <div className="text-[2rem] leading-none tabular tracking-tight text-foreground">Rp98,643.24</div>
             <div className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">+8.4%</div>
           </div>
-          {/* <CardDescription className="mt-3 text-sm leading-relaxed">
-            Profit mix lintas channel dengan pembacaan pola bulanan, sinyal pertumbuhan, dan konteks distribusi aktif.
-          </CardDescription> */}
           <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-slate-200" />
-              Total Sales
+              Total Penjualan
             </span>
             <span className="inline-flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-[#FF8730]" />
-              Total Revenue
+              Total Pendapatan
             </span>
           </div>
         </div>
@@ -90,17 +87,17 @@ export function SelloutChartPanel() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Chart Options</DropdownMenuLabel>
+              <DropdownMenuLabel>Opsi Grafik</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => toast.success("Export PNG sedang disiapkan")}>
-                Export as PNG
+                Unduh sebagai PNG
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => toast.success("Export CSV sedang didownload", { description: "Data mencakup seluruh channel terpilih."})}>
-                Export as CSV
+                Unduh sebagai CSV
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => toast.info("Menampilkan raw data dalam view tabel")}>
-                View Raw Data
+                Lihat data mentah
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -175,7 +172,7 @@ export function SelloutChartPanel() {
                           <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                             {value}
                           </div>
-                          <div className="mt-1 text-sm font-semibold text-foreground">Profit by channel</div>
+                          <div className="mt-1 text-sm font-semibold text-foreground">Ringkasan per channel</div>
                         </div>
                         <div className="text-right">
                           <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">

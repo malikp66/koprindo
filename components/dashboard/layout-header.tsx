@@ -39,7 +39,7 @@ export function LayoutHeader({
             <Boxes className="h-4 w-4" />
           </div>
           <div className="min-w-0">
-            <h2 className="truncate text-xl font-semibold tracking-tight text-foreground">FOX Control Tower</h2>
+            <h2 className="truncate text-xl font-semibold tracking-tight text-foreground">Pusat Kendali FOX</h2>
           </div>
         </div>
       </div>
@@ -64,7 +64,7 @@ export function LayoutHeader({
       <div className="flex flex-wrap items-center justify-between gap-2 xl:justify-end">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="icon" title="Notifications" className="relative">
+            <Button variant="outline" size="icon" title="Notifikasi" className="relative">
               <span className="absolute top-1.5 right-1.5 flex h-2 w-2 rounded-full bg-red-500" />
               <BellRing className="h-4 w-4" />
             </Button>
@@ -77,21 +77,21 @@ export function LayoutHeader({
               <div className="flex items-start gap-3 px-4 py-3 hover:bg-accent/50 cursor-pointer">
                 <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-500 shrink-0" />
                 <div className="grid gap-1">
-                  <p className="text-sm border-b-0 font-medium">Aging Payment Alert</p>
+                  <p className="text-sm border-b-0 font-medium">Peringatan Piutang Jatuh Tempo</p>
                   <p className="text-xs text-muted-foreground">3 invoice dari Alfamart mendekati bracket 46-60 hari.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 px-4 py-3 hover:bg-accent/50 cursor-pointer">
                 <AlertTriangle className="mt-0.5 h-4 w-4 text-red-500 shrink-0" />
                 <div className="grid gap-1">
-                  <p className="text-sm font-medium">Stockout Warning</p>
-                  <p className="text-xs text-muted-foreground">Ketersediaan gudang Cirebon untuk SKU beras menipis.</p>
+                  <p className="text-sm font-medium">Peringatan Stok Menipis</p>
+                  <p className="text-xs text-muted-foreground">Ketersediaan gudang Cirebon untuk SKU FOX mulai menipis.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 px-4 py-3 hover:bg-accent/50 cursor-pointer">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-500 shrink-0" />
                 <div className="grid gap-1">
-                  <p className="text-sm font-medium">Batch Processed</p>
+                  <p className="text-sm font-medium">Batch Berhasil Diproses</p>
                   <p className="text-xs text-muted-foreground">Data sell-out Indomaret batch Sep-2026 berhasil divalidasi.</p>
                 </div>
               </div>
@@ -107,13 +107,13 @@ export function LayoutHeader({
             <div className="flex items-center gap-3 rounded-full border border-border/30 bg-white px-4 py-2 shadow-soft hover:bg-accent/50 transition-colors">
               <UserCircle2 className="h-7 w-7 text-muted-foreground" />
               <div className="hidden pr-1 text-sm leading-tight sm:block text-left">
-                <div className="font-medium text-foreground">{roleLabel} Workspace</div>
+                <div className="font-medium text-foreground">Ruang kerja {roleLabel}</div>
                 <div className="text-xs text-muted-foreground">akses pengguna aktif</div>
               </div>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>Switch Role (Demo)</DropdownMenuLabel>
+            <DropdownMenuLabel>Ganti Peran (Demo)</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {demoRoleOptions.map((option) => (
               <DropdownMenuItem 
@@ -126,7 +126,7 @@ export function LayoutHeader({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">Log out</DropdownMenuItem>
+            <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">Keluar</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -49,23 +49,23 @@
 
   body {
     @apply min-h-screen bg-background text-foreground antialiased;
-    font-family: var(--font-sans), "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 14.5px;
-    line-height: 1.6;
+    font-family: var(--font-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 15px;
+    line-height: 1.68;
   }
 
   h1,
   h2,
   h3,
   h4 {
-    font-family: var(--font-sans), "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-    letter-spacing: -0.02em;
-    font-weight: 600;
+    font-family: var(--font-sans), "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.025em;
+    font-weight: 650;
   }
 
   @media (min-width: 768px) {
     body {
-      font-size: 15px;
+      font-size: 15.5px;
     }
   }
 }
@@ -93,7 +93,7 @@
   }
 
   .tabular {
-    font-family: var(--font-sans), "Inter", sans-serif;
+    font-family: var(--font-mono), "JetBrains Mono", monospace;
     font-variant-numeric: tabular-nums;
   }
 

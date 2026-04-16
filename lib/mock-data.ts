@@ -32,29 +32,136 @@ export const globalFilters = {
   sync: demoScenario.refreshTimestamp,
 };
 
+export const foxProductPortfolio = [
+  {
+    title: "Entry / mass market disposable",
+    skus: ["FOX Premium", "FOX Borobudur", "FOX Rocket"],
+    priceBand: "Rp840 - Rp1.350",
+    positioning:
+      "Lini paling basic, mudah dipahami konsumen, dan jadi volume driver dengan repeat tinggi.",
+    channels:
+      "Warung, toko kelontong, agen rokok, grosir pasar, AksesMu, serta minimarket nasional.",
+    modernRetailTag: "Core",
+    badgeVariant: "success" as const,
+    modernRetailRole:
+      "Paling layak jadi SKU inti Alfamart dan Indomaret karena sederhana, cepat rotasi, dan aman di price point.",
+  },
+  {
+    title: "Mid-tier upgrade / windproof ringan",
+    skus: ["FOX Zenith 905", "FOX Zenith 905 Slim", "FOX Zenith 906", "FOX Zenith 906 Api Las", "FOX Gamma Kecil"],
+    priceBand: "Rp2.400 - Rp3.000",
+    positioning:
+      "Trade-up dari korek basic untuk pengguna yang ingin rasa lebih bagus tanpa masuk ke premium metal-body.",
+    channels:
+      "GT premium, toko rokok rapi, kios outdoor, counter impulse dekat kasir, dan e-commerce multipack.",
+    modernRetailTag: "Trade-up",
+    badgeVariant: "warning" as const,
+    modernRetailRole:
+      "Cocok sebagai test SKU atau trade-up SKU di modern retail, bukan lini utama untuk all-store rollout.",
+  },
+  {
+    title: "Premium accessible / body besi / style-driven",
+    skus: ["FOX Zenith Alpha", "FOX Zenith Gamma (Bodi Besi)", "FOX Zenith Beta"],
+    priceBand: "Rp3.000 - Rp4.250",
+    positioning:
+      "Dijual bukan hanya karena fungsi, tetapi karena desain, feel, dan kesan premium yang lebih kuat.",
+    channels:
+      "Toko rokok premium, vape shop, toko aksesori pria, kios hadiah kecil, dan e-commerce.",
+    modernRetailTag: "Selective",
+    badgeVariant: "info" as const,
+    modernRetailRole:
+      "Lebih cocok untuk selective listing dan margin play, bukan fokus utama minimarket nasional.",
+  },
+  {
+    title: "Utility / jumbo torch",
+    skus: ["FOX Zenith Sumo FL-008"],
+    priceBand: "Rp15.900 - Rp19.500",
+    positioning:
+      "Masuk ke utility product jumbo dan refillable, bukan lagi korek rokok impulse biasa.",
+    channels:
+      "Toko alat rumah tangga, toko gas dan kompor, toko outdoor atau camping, hardware ringan, dan marketplace.",
+    modernRetailTag: "Specialty",
+    badgeVariant: "neutral" as const,
+    modernRetailRole:
+      "Lebih cocok untuk seasonal atau selected stores, bukan core assortment minimarket.",
+  },
+  {
+    title: "Household / kitchen utility",
+    skus: ["Korek Kompor BBQ FOX"],
+    priceBand: "Household utility",
+    positioning:
+      "SKU rumah tangga untuk kebutuhan dapur dan BBQ, bukan item yang dipimpin konsumsi smoker-led.",
+    channels:
+      "Supermarket rumah tangga, toko peralatan dapur, toko gas LPG, toko BBQ, dan marketplace.",
+    modernRetailTag: "Add-on",
+    badgeVariant: "neutral" as const,
+    modernRetailRole:
+      "Masuk akal sebagai SKU tambahan selected stores, bukan produk utama modern retail nasional.",
+  },
+];
+
+export const foxModernRetailStrategy = [
+  {
+    title: "Core SKU",
+    skus: "FOX Premium / FOX Borobudur / FOX Rocket",
+    note: "Lini inti untuk volume, impulse purchase, dan rotasi tercepat di kanal ritel modern nasional.",
+  },
+  {
+    title: "Test trade-up SKU",
+    skus: "FOX Zenith 905 atau FOX Zenith 905 Slim",
+    note: "Pakai sebagai step-up SKU terbatas untuk membaca appetite konsumen terhadap korek upgrade.",
+  },
+  {
+    title: "Selective / non-core",
+    skus: "FOX Zenith Alpha / FOX Zenith Gamma (Bodi Besi)",
+    note: "Jaga hanya di outlet terpilih yang siap bermain di margin dan style, bukan volume mass market.",
+  },
+  {
+    title: "Specialty / non-core modern retail",
+    skus: "FOX Zenith Sumo FL-008 / Korek Kompor BBQ FOX",
+    note: "Lebih kuat di specialty retail dan marketplace daripada dijadikan all-store core listing.",
+  },
+];
+
+export const foxAcceptedSkus = [
+  "FOX Premium",
+  "FOX Borobudur",
+  "FOX Rocket",
+  "FOX Zenith 905",
+  "FOX Zenith 905 Slim",
+  "FOX Zenith 906",
+  "FOX Zenith 906 Api Las",
+  "FOX Gamma Kecil",
+  "FOX Zenith Alpha",
+  "FOX Zenith Gamma (Bodi Besi)",
+  "FOX Zenith Beta",
+  "FOX Zenith Sumo FL-008",
+  "Korek Kompor BBQ FOX",
+];
+
 export const operationalStatusSummary = [
   {
-    label: "Last updated",
+    label: "Pembaruan terakhir",
     value: demoScenario.refreshTimestamp,
-    note: "Near-real-time sesudah event ingest valid",
+    note: "Hampir waktu nyata setelah data masuk tervalidasi",
     tone: "info" as StatusTone,
   },
   {
-    label: "Published posture",
-    value: `${demoScenario.qualityPublishedCount} published`,
-    note: `${demoScenario.qualityProvisionalCount} provisional menunggu review`,
+    label: "Status penerbitan",
+    value: `${demoScenario.qualityPublishedCount} batch terbit`,
+    note: `${demoScenario.qualityProvisionalCount} batch sementara menunggu peninjauan`,
     tone: "success" as StatusTone,
   },
   {
-    label: "Data quality",
+    label: "Kualitas data",
     value: demoScenario.schemaMatchRate,
-    note: "Schema match rate periode aktif",
+    note: "Kesesuaian skema pada periode aktif",
     tone: "success" as StatusTone,
   },
   {
-    label: "Decision control",
-    value: "Quality gate active",
-    note: "Blocking issue tidak boleh publish ke executive layer",
+    label: "Kendali keputusan",
+    value: "Pemeriksaan mutu aktif",
+    note: "Masalah penghambat tidak boleh terbit ke tampilan pimpinan",
     tone: "warning" as StatusTone,
   },
 ];
@@ -62,40 +169,40 @@ export const operationalStatusSummary = [
 export const sourceIntakeContracts = [
   {
     id: "sell-in",
-    title: "sell_in_record",
+    title: "Data barang masuk",
     owner: "Gunawan Elektro / Koprindo",
     cadence: "Per pengiriman / penerimaan",
-    status: "Ready for intake",
+    status: "Siap diproses",
     note: "Mencatat barang masuk ke gudang Koprindo atau gudang ritel sebagai basis distribusi awal.",
     requiredFields: ["periode", "channel", "wilayah", "sku", "qty_sell_in", "tanggal_terima"],
     output: "Dipakai untuk reconciliation, inventory position, dan stock risk.",
   },
   {
     id: "sell-out",
-    title: "sell_out_record",
+    title: "Data penjualan keluar",
     owner: "PIC Ritel Modern",
     cadence: "Batch bulanan",
-    status: "Primary control source",
+    status: "Sumber kendali utama",
     note: "Mencatat barang terjual ke konsumen akhir untuk target vs actual dan sell-through.",
     requiredFields: ["periode", "channel", "outlet", "sku", "qty_sell_out", "nilai_penjualan"],
     output: "Masuk ke monitoring channel, branch performance, dan executive pack.",
   },
   {
     id: "payment",
-    title: "payment_record",
+    title: "Data pembayaran",
     owner: "Finance Koprindo / Finance Partner",
     cadence: "Harian / mingguan",
-    status: "Critical financial source",
+    status: "Sumber keuangan kritis",
     note: "Mencatat invoice, due date, pembayaran, aging bucket, dan exposure arus kas.",
     requiredFields: ["invoice_id", "pihak_pembayar", "pihak_penerima", "due_date", "amount", "payment_status"],
     output: "Masuk ke payment watchlist, aging ledger, dan risk event finansial.",
   },
   {
     id: "inventory",
-    title: "inventory_position",
+    title: "Posisi persediaan",
     owner: "Warehouse / Distribution Ops",
     cadence: "Snapshot periodik",
-    status: "Risk engine source",
+    status: "Sumber mesin risiko",
     note: "Mencatat opening stock, closing stock, dan stock cover untuk mendeteksi stockout dan overstock.",
     requiredFields: ["periode", "channel", "cabang", "outlet", "sku", "closing_stock"],
     output: "Masuk ke stock imbalance rule, outlet risk, dan branch action lane.",
@@ -105,7 +212,7 @@ export const sourceIntakeContracts = [
     title: "master_distribusi",
     owner: "Admin Sistem",
     cadence: "Saat mapping berubah",
-    status: "Governed source",
+    status: "Sumber terkendali",
     note: "Master channel, wilayah, cabang, outlet, dan target turunan untuk menjaga konsistensi agregasi.",
     requiredFields: ["channel", "wilayah", "cabang", "outlet", "target_unit", "owner"],
     output: "Dipakai oleh semua modul untuk mapping, approval log, dan audit trail.",
@@ -113,46 +220,46 @@ export const sourceIntakeContracts = [
 ];
 
 export const canonicalBatchStatusSummary = [
-  { status: "received", count: "5", note: "Batch baru diregistrasi dan checksum tersimpan.", tone: "info" as StatusTone },
-  { status: "validated", count: "4", note: "Schema, kolom wajib, dan tipe data lolos.", tone: "success" as StatusTone },
-  { status: "normalized", count: "3", note: "Mapping dan standardisasi nilai selesai.", tone: "info" as StatusTone },
-  { status: "reconciled", count: "2", note: "Sudah dibandingkan dengan source lain yang relevan.", tone: "success" as StatusTone },
-  { status: "published", count: "2", note: "Boleh dipakai di monitoring dan reporting.", tone: "success" as StatusTone },
-  { status: "exception_review", count: "1", note: "Masuk review karena mismatch atau kualitas rendah.", tone: "warning" as StatusTone },
-  { status: "rejected", count: "1", note: "Blocking issue membuat batch ditolak.", tone: "danger" as StatusTone },
+  { status: "Diterima", count: "5", note: "Batch baru diregistrasi dan checksum tersimpan.", tone: "info" as StatusTone },
+  { status: "Tervalidasi", count: "4", note: "Skema, kolom wajib, dan tipe data lolos.", tone: "success" as StatusTone },
+  { status: "Dinormalisasi", count: "3", note: "Pemetaan dan standardisasi nilai selesai.", tone: "info" as StatusTone },
+  { status: "Direkonsiliasi", count: "2", note: "Sudah dibandingkan dengan sumber lain yang relevan.", tone: "success" as StatusTone },
+  { status: "Terbit", count: "2", note: "Boleh dipakai di monitoring dan pelaporan.", tone: "success" as StatusTone },
+  { status: "Tinjau pengecualian", count: "1", note: "Masuk peninjauan karena selisih atau kualitas rendah.", tone: "warning" as StatusTone },
+  { status: "Ditolak", count: "1", note: "Masalah penghambat membuat batch ditolak.", tone: "danger" as StatusTone },
 ];
 
 export const batchRegistryDetailed = [
   {
     batchId: "BAT-SOUT-ALF-20260410-001",
-    sourceType: "sell_out_record",
+    sourceType: "Data penjualan keluar",
     channel: "Alfamart",
     period: "Sep-2026",
-    status: "published",
+    status: "terbit",
     qualityScore: "98.6",
-    reconciliation: "matched",
+    reconciliation: "sesuai",
     owner: "Rina Prameswari",
     updatedAt: "10 Apr 2026 10:18",
     issueCount: 0,
   },
   {
     batchId: "BAT-PAY-ALF-20260410-004",
-    sourceType: "payment_record",
+    sourceType: "Data pembayaran",
     channel: "Alfamart",
     period: "Sep-2026",
-    status: "reconciled",
+    status: "direkonsiliasi",
     qualityScore: "96.2",
-    reconciliation: "aging variance cleared",
+    reconciliation: "selisih umur piutang sudah bersih",
     owner: "Finance Koprindo",
     updatedAt: "10 Apr 2026 11:02",
     issueCount: 1,
   },
   {
     batchId: "BAT-SOUT-IDM-20260410-002",
-    sourceType: "sell_out_record",
+    sourceType: "Data penjualan keluar",
     channel: "Indomaret",
     period: "Sep-2026",
-    status: "exception_review",
+    status: "tinjau pengecualian",
     qualityScore: "84.3",
     reconciliation: "14 row non-FOX, menunggu review",
     owner: "Fajar Nugraha",
@@ -161,12 +268,12 @@ export const batchRegistryDetailed = [
   },
   {
     batchId: "BAT-INV-KOP-20260409-001",
-    sourceType: "inventory_position",
+    sourceType: "Posisi persediaan",
     channel: "Semua Channel",
     period: "Sep-2026",
-    status: "validated",
+    status: "tervalidasi",
     qualityScore: "91.1",
-    reconciliation: "pending against sell-in",
+    reconciliation: "menunggu dibandingkan dengan barang masuk",
     owner: "Distribution Ops",
     updatedAt: "09 Apr 2026 18:21",
     issueCount: 2,
@@ -176,9 +283,9 @@ export const batchRegistryDetailed = [
     sourceType: "master_distribusi",
     channel: "Semua Channel",
     period: "Sep-2026",
-    status: "published",
+    status: "terbit",
     qualityScore: "100",
-    reconciliation: "mapping approved",
+    reconciliation: "pemetaan disetujui",
     owner: "Admin Sistem",
     updatedAt: "08 Apr 2026 15:06",
     issueCount: 0,
@@ -187,20 +294,20 @@ export const batchRegistryDetailed = [
 
 export const reconciliationCheckpoints = [
   {
-    title: "sell-in vs sell-out",
+    title: "Barang masuk vs penjualan keluar",
     value: demoScenario.sellInSellOutVariance,
     note: "Variance nasional masih dalam ambang kontrol, tetapi dua cabang perlu penelusuran lebih detail.",
     tone: "warning" as StatusTone,
   },
   {
-    title: "payment vs invoice",
-    value: "97.4% matched",
+    title: "Pembayaran vs invoice",
+    value: "97.4% sesuai",
     note: "Seluruh invoice aktif punya due date dan payment status. Satu invoice masih partial payment.",
     tone: "info" as StatusTone,
   },
   {
-    title: "inventory vs distribution",
-    value: "142 outlet flagged",
+    title: "Persediaan vs distribusi",
+    value: "142 outlet ditandai",
     note: "Stock cover outlet kritis sudah diturunkan ke risk engine untuk prioritas intervensi.",
     tone: "danger" as StatusTone,
   },
@@ -209,69 +316,69 @@ export const reconciliationCheckpoints = [
 export const riskEventQueue = [
   {
     eventId: "RISK-STK-001",
-    eventType: "Stockout",
-    severity: "Critical",
+    eventType: "Stok kosong",
+    severity: "Kritis",
     entityType: "Cabang",
     entityKey: "Cirebon Raya",
     owner: "Tim BD Jawa Barat",
     sla: "4 jam",
-    status: "Open",
+    status: "Terbuka",
     observedValue: "Stock cover 2 hari",
     thresholdRule: "stock_cover_days < 3",
     source: "inventory_position",
-    workflowState: "Approved for action",
-    agentAction: "AI classified -> human approved",
+    workflowState: "Disetujui untuk ditindaklanjuti",
+    agentAction: "AI mengelompokkan -> manusia menyetujui",
     confidence: "96%",
     updatedAt: "11 Apr 2026 09:24",
   },
   {
     eventId: "RISK-DIST-004",
-    eventType: "Sell-in/Sell-out mismatch",
-    severity: "High",
+    eventType: "Selisih barang masuk dan penjualan keluar",
+    severity: "Tinggi",
     entityType: "Channel",
     entityKey: "Indomaret",
     owner: "Ops Channel Indomaret",
     sla: "1 hari",
-    status: "Exception Review",
+    status: "Tinjau pengecualian",
     observedValue: "14 row non-FOX, variance 9.2%",
     thresholdRule: "variance > 8% or invalid row > 0",
     source: "sell_out_record",
-    workflowState: "Review in progress",
-    agentAction: "AI normalized -> reviewer open",
+    workflowState: "Peninjauan sedang berjalan",
+    agentAction: "AI menormalkan -> peninjau membuka",
     confidence: "91%",
     updatedAt: "10 Apr 2026 08:42",
   },
   {
     eventId: "RISK-PAY-002",
-    eventType: "Payment non-compliance",
-    severity: "High",
+    eventType: "Pembayaran tidak patuh",
+    severity: "Tinggi",
     entityType: "Invoice",
     entityKey: "ALF-SEP-2026-112",
     owner: "Finance Koprindo",
     sla: "8 jam",
-    status: "In Progress",
+    status: "Sedang ditangani",
     observedValue: "Aging bucket 31-45, partial payment",
     thresholdRule: "aging_bucket >= 31-45 and paid_amount < amount",
     source: "payment_record",
-    workflowState: "Escalation scheduled",
-    agentAction: "AI reminder queued",
+    workflowState: "Eskalasi dijadwalkan",
+    agentAction: "AI menjadwalkan pengingat",
     confidence: "89%",
     updatedAt: "11 Apr 2026 08:57",
   },
   {
     eventId: "RISK-DATA-003",
-    eventType: "Low quality batch",
-    severity: "Warning",
+    eventType: "Batch berkualitas rendah",
+    severity: "Peringatan",
     entityType: "Batch",
     entityKey: "BAT-SOUT-IDM-20260410-002",
     owner: "Admin Sistem",
     sla: "1 hari",
-    status: "Pending Validation",
+    status: "Menunggu validasi",
     observedValue: "Quality score 84.3",
     thresholdRule: "quality_score < 85",
     source: "data_quality_result",
-    workflowState: "Validation blocked",
-    agentAction: "AI requested remap",
+    workflowState: "Validasi tertahan",
+    agentAction: "AI meminta pemetaan ulang",
     confidence: "84%",
     updatedAt: "10 Apr 2026 08:44",
   },
@@ -285,9 +392,9 @@ export const invoiceLedger = [
     dueDate: "19 Apr 2026",
     amount: "Rp320 Jt",
     paidAmount: "Rp120 Jt",
-    status: "Partial",
-    agingBucket: "31-45",
-    compliance: "Warning",
+    status: "Sebagian",
+    agingBucket: "31-45 hari",
+    compliance: "Perlu perhatian",
     owner: "Finance Koprindo",
   },
   {
@@ -297,9 +404,9 @@ export const invoiceLedger = [
     dueDate: "28 Apr 2026",
     amount: "Rp540 Jt",
     paidAmount: "Rp0",
-    status: "Open",
-    agingBucket: "0-30",
-    compliance: "Current",
+    status: "Terbuka",
+    agingBucket: "0-30 hari",
+    compliance: "Lancar",
     owner: "Finance Koprindo",
   },
   {
@@ -309,9 +416,9 @@ export const invoiceLedger = [
     dueDate: "14 Mei 2026",
     amount: "Rp1.14 M",
     paidAmount: "Rp0",
-    status: "Open",
-    agingBucket: "0-30",
-    compliance: "Current",
+    status: "Terbuka",
+    agingBucket: "0-30 hari",
+    compliance: "Lancar",
     owner: "Finance Koprindo",
   },
   {
@@ -321,9 +428,9 @@ export const invoiceLedger = [
     dueDate: "07 Apr 2026",
     amount: "Rp180 Jt",
     paidAmount: "Rp60 Jt",
-    status: "Past Due",
-    agingBucket: "46-60",
-    compliance: "High",
+    status: "Lewat jatuh tempo",
+    agingBucket: "46-60 hari",
+    compliance: "Tinggi",
     owner: "Finance Collections",
   },
 ];
@@ -370,7 +477,7 @@ export const uploadStatus = [
   {
     channel: "Alfamart",
     pic: "Rina Prameswari",
-    status: "Processed",
+    status: "Selesai diproses",
     tone: "success" as StatusTone,
     uploadedAt: "10 Apr 2026, 10:18",
     progress: 100,
@@ -378,7 +485,7 @@ export const uploadStatus = [
   {
     channel: "Indomaret",
     pic: "Fajar Nugraha",
-    status: "Validating",
+    status: "Sedang divalidasi",
     tone: "warning" as StatusTone,
     uploadedAt: "10 Apr 2026, 08:42",
     progress: 68,
@@ -386,7 +493,7 @@ export const uploadStatus = [
   {
     channel: "aksesmu",
     pic: "Siti Fauziah",
-    status: "Pending Upload",
+    status: "Menunggu unggahan",
     tone: "danger" as StatusTone,
     uploadedAt: "-",
     progress: 22,
@@ -465,14 +572,14 @@ export const branchRanking = [
 
 export const anomalyFeed = [
   {
-    severity: "Critical",
+    severity: "Kritis",
     title: "Cabang Cirebon Raya turun 28.9% MoM",
     detail: "Outlet aktif turun 17% dan availability hanya 52%.",
     action: "Jalankan Evaluasi PKS",
     tone: "danger" as StatusTone,
   },
   {
-    severity: "Warning",
+    severity: "Peringatan",
     title: "Indomaret wilayah Bandung Timur stok akhir < ambang aman",
     detail: "7 outlet berada di bawah threshold 10 unit.",
     action: "Buka monitoring cabang",
@@ -627,7 +734,7 @@ export const returnSummary = [
   { label: "Qty Retur Bulan Ini", value: demoScenario.returnQty, note: `${demoScenario.returnRate} dari sell-out` },
   { label: "Outlet Dengan Retur", value: "128", note: "11 outlet baru" },
   { label: "Cabang Retur Tertinggi", value: "Surabaya Timur", note: "3.440 unit" },
-  { label: "Unresolved Cases", value: "7", note: "Perlu follow-up" },
+  { label: "Kasus Belum Selesai", value: "7", note: "Perlu tindak lanjut" },
 ];
 
 export const returnReasons = [
@@ -678,9 +785,9 @@ export const returnLedger = [
 ];
 
 export const reportSummary = [
-  { label: "Laporan Periode Aktif", value: "4", note: "2 generated, 2 queued" },
-  { label: "Status PDF", value: "2 Siap Kirim", note: "1 draft, 1 failed" },
-  { label: "Distribusi Principal", value: "Terakhir 07 Apr 2026", note: "On time" },
+  { label: "Laporan Periode Aktif", value: "4", note: "2 sudah dibuat, 2 dalam antrean" },
+  { label: "Status PDF", value: "2 siap kirim", note: "1 draf, 1 gagal" },
+  { label: "Distribusi Prinsipal", value: "Terakhir 07 Apr 2026", note: "Tepat waktu" },
   { label: "Retry Diperlukan", value: "1 laporan", note: "Email principal gagal" },
 ];
 
@@ -699,13 +806,13 @@ export const batchWorkflowSteps = [
   },
   {
     id: "quality",
-    title: "Quality gate",
+    title: "Pemeriksaan mutu",
     status: "active",
     note: "Review issue row non-FOX dan publish decision sedang berjalan.",
   },
   {
     id: "publish",
-    title: "Executive publish",
+    title: "Terbit ke pimpinan",
     status: "pending",
     note: "Angka final hanya tayang setelah batch dipublish atau diberi flag provisional.",
   },
@@ -714,7 +821,7 @@ export const batchWorkflowSteps = [
 export const reportPreviewSections = [
   {
     id: "executive",
-    title: "Executive Summary",
+    title: "Ringkasan Pimpinan",
     summary: `Sell-out ${demoScenario.totalSellOutCompact}, progress target ${demoScenario.targetProgress}, dan status PKS Early Warning.`,
     bullets: [
       `Outlet aktif ${demoScenario.activeOutletCount} dengan coverage ${demoScenario.distributionCoverage}.`,
@@ -724,7 +831,7 @@ export const reportPreviewSections = [
   },
   {
     id: "risk",
-    title: "Risk Control",
+    title: "Kendali Risiko",
     summary: "Ringkasan risiko cabang, payment watchlist, dan exception outlet untuk steering mingguan.",
     bullets: [
       `Stock risk terdeteksi di ${demoScenario.riskOutletCount}.`,
@@ -734,7 +841,7 @@ export const reportPreviewSections = [
   },
   {
     id: "governance",
-    title: "Governance Notes",
+    title: "Catatan Tata Kelola",
     summary: "Catatan kualitas data, approval, dan status distribusi laporan untuk stakeholder.",
     bullets: [
       `${demoScenario.qualityPublishedCount} batch published dan ${demoScenario.qualityProvisionalCount} batch provisional.`,
@@ -746,18 +853,18 @@ export const reportPreviewSections = [
 
 export const branchDetailMoments = [
   {
-    title: "Branch signal",
+    title: "Sinyal cabang",
     value: "Cirebon Raya",
     detail: "Growth -28.9%, outlet aktif 49%, dan stok masuk kategori kritis.",
   },
   {
-    title: "Immediate action",
-    value: "Audit coverage outlet",
+    title: "Tindakan segera",
+    value: "Audit cakupan outlet",
     detail: "Turunkan alokasi, cek visibility stok, dan review rute distribusi 7 hari ke depan.",
   },
   {
-    title: "Financial note",
-    value: "Payment follow-up",
+    title: "Catatan keuangan",
+    value: "Tindak lanjut pembayaran",
     detail: "Cabang terkait masuk watchlist payment karena channel masih membawa exposure aging.",
   },
 ] as const;
@@ -766,22 +873,22 @@ export const reportCatalog = [
   {
     title: "Laporan Rekap Bulanan",
     detail: "KPI sell-out, ranking cabang, anomaly center, dan aktivitas upload.",
-    status: "Ready",
+    status: "Siap",
   },
   {
     title: "Evaluasi PKS",
     detail: "Status threshold dan hasil evaluasi performa distributor per periode.",
-    status: "Draft",
+    status: "Draf",
   },
   {
     title: "Rekomendasi Alokasi PO",
     detail: "Saran PO bulan berikutnya berdasarkan sell-out dan stok akhir.",
-    status: "Queued",
+    status: "Dalam antrean",
   },
   {
     title: "Ringkasan Retur",
     detail: "Retur per channel, alasan, dan dampak pada sell-out efektif.",
-    status: "Ready",
+    status: "Siap",
   },
 ];
 
@@ -793,8 +900,8 @@ export const generatedReports = [
     generated: "11 Apr 2026 07:05",
     by: "n8n Scheduler",
     format: "PDF",
-    distribution: "Sent",
-    recipient: "Management Internal",
+    distribution: "Terkirim",
+    recipient: "Manajemen internal",
   },
   {
     name: "Evaluasi PKS September 2026",
@@ -803,7 +910,7 @@ export const generatedReports = [
     generated: "11 Apr 2026 07:12",
     by: "Admin Sistem",
     format: "PDF",
-    distribution: "Draft",
+    distribution: "Draf",
     recipient: "Belum dikirim",
   },
   {
@@ -813,7 +920,7 @@ export const generatedReports = [
     generated: "11 Apr 2026 07:20",
     by: "n8n Scheduler",
     format: "XLSX",
-    distribution: "Queued",
+    distribution: "Dalam antrean",
     recipient: "Tim BD Koprindo",
   },
 ];

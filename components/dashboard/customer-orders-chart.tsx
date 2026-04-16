@@ -4,14 +4,14 @@ import * as React from "react";
 import { Area, AreaChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 
 const orderSeries = [
-  { month: "May", value: 420 },
+  { month: "Mei", value: 420 },
   { month: "Jun", value: 520 },
   { month: "Jul", value: 470 },
-  { month: "Aug", value: 540 },
+  { month: "Agu", value: 540 },
   { month: "Sep", value: 720 },
-  { month: "Oct", value: 650 },
+  { month: "Okt", value: 650 },
   { month: "Nov", value: 690 },
-  { month: "Dec", value: 780 },
+  { month: "Des", value: 780 },
 ];
 
 function OrdersTooltip({
@@ -31,7 +31,7 @@ function OrdersTooltip({
       </div>
       <div className="flex items-center gap-2 tabular-nums text-[13px] font-bold text-foreground">
         <div className="h-2 w-2 rounded-full bg-[var(--chart-3)]" />
-        {payload[0].value?.toLocaleString("id-ID")} orders
+        {payload[0].value?.toLocaleString("id-ID")} pesanan
       </div>
     </div>
   );

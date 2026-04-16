@@ -14,8 +14,8 @@ const processStages: Array<{
 }> = [
   {
     id: "intake",
-    label: "Data Intake",
-    note: "Batch diterima, divalidasi, dan dipublish",
+    label: "Penerimaan Data",
+    note: "Batch diterima, divalidasi, lalu disiapkan untuk dipublikasikan",
     href: "/dashboard/upload",
     icon: FileSpreadsheet,
   },
@@ -28,15 +28,15 @@ const processStages: Array<{
   },
   {
     id: "exceptions",
-    label: "Exception Control",
-    note: "Koreksi exception dan dampak operasional dicatat",
+    label: "Retur dan Koreksi",
+    note: "Retur, koreksi, dan dampak operasional dicatat",
     href: "/dashboard/retur",
     icon: ReceiptText,
   },
   {
     id: "reports",
-    label: "Reports",
-    note: "Output eksekutif dan audit trail difinalkan",
+    label: "Laporan",
+    note: "Laporan pimpinan dan jejak audit diselesaikan",
     href: "/dashboard/laporan",
     icon: ClipboardList,
   },
@@ -44,8 +44,8 @@ const processStages: Array<{
 
 export function ProcessFlowBar({
   current,
-  title = "Operational Cycle",
-  description = "Siklus operasional utama yang menghubungkan intake data, monitoring, exception handling, dan pelaporan.",
+  title = "Siklus Operasional",
+  description = "Siklus operasional utama yang menghubungkan penerimaan data, monitoring, penanganan retur, dan pelaporan.",
 }: {
   current?: ProcessStage;
   title?: string;

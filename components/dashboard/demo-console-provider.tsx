@@ -3,11 +3,11 @@
 import * as React from "react";
 
 export const demoRoleOptions = [
-  { value: "executive", label: "Executive" },
-  { value: "operations", label: "Operations" },
-  { value: "finance", label: "Finance" },
-  { value: "consultant", label: "Consultant" },
-  { value: "principal", label: "Principal" },
+  { value: "executive", label: "Pimpinan" },
+  { value: "operations", label: "Operasional" },
+  { value: "finance", label: "Keuangan" },
+  { value: "consultant", label: "Konsultan" },
+  { value: "principal", label: "Prinsipal" },
   { value: "retail", label: "Retail PIC" },
 ] as const;
 

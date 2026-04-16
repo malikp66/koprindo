@@ -32,13 +32,13 @@ export function SignalExplainSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={title}
-      description="Transparansi signal untuk menelusuri reasoning AI, sumber data, dan aturan keputusan yang dipakai."
+      description="Transparansi indikator untuk menelusuri penalaran AI, sumber data, dan aturan keputusan yang dipakai."
     >
       <div className="space-y-4">
         <div className="rounded-2xl border border-border/25 bg-accent/20 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Signal summary</div>
+              <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Ringkasan indikator</div>
               <div className="mt-2 text-base font-medium leading-relaxed text-foreground">{summary}</div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -54,7 +54,7 @@ export function SignalExplainSheet({
         <div className="rounded-2xl border border-border/25 bg-white/75 p-4">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <GitBranch className="h-4 w-4 text-sky-600" />
-            Reasoning path
+            Jalur penalaran
           </div>
           <div className="mt-3 grid gap-2">
             {reasoning.map((item) => (
@@ -68,7 +68,7 @@ export function SignalExplainSheet({
         <div className="rounded-2xl border border-border/25 bg-white/75 p-4">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Database className="h-4 w-4 text-sky-600" />
-            Data sources
+            Sumber data
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {sources.map((item) => (
@@ -82,15 +82,15 @@ export function SignalExplainSheet({
         <div className="rounded-2xl border border-border/25 bg-white/75 p-4">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <ShieldCheck className="h-4 w-4 text-sky-600" />
-            Decision control
+            Kendali keputusan
           </div>
           <div className="mt-3 grid gap-3">
             <div>
-              <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Rule applied</div>
+              <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Aturan yang dipakai</div>
               <div className="mt-1.5 text-sm leading-relaxed text-foreground">{decisionRule}</div>
             </div>
             <div>
-              <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Recommended action</div>
+              <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Tindakan yang disarankan</div>
               <div className="mt-1.5 text-sm leading-relaxed text-foreground">{recommendedAction}</div>
             </div>
           </div>

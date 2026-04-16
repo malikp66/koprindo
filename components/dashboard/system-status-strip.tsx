@@ -3,6 +3,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toneToBadge } from "@/components/dashboard/tone";
 import type { StatusTone } from "@/lib/mock-data";
 
+const toneLabel: Record<StatusTone, string> = {
+  success: "Aman",
+  warning: "Perlu perhatian",
+  danger: "Kritis",
+  info: "Info",
+  neutral: "Netral",
+};
+
 export function SystemStatusStrip({
   items,
 }: {
@@ -24,7 +32,7 @@ export function SystemStatusStrip({
                 <div className="mt-3 text-base font-medium tracking-tight text-foreground">{item.value}</div>
                 <div className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.note}</div>
               </div>
-              <Badge variant={toneToBadge(item.tone)}>{item.tone}</Badge>
+              <Badge variant={toneToBadge(item.tone)}>{toneLabel[item.tone]}</Badge>
             </div>
           </CardContent>
         </Card>
