@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
-import { Flame, MoreHorizontal, Store, ShoppingCart } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+import { ChannelLogo } from "@/components/dashboard/channel-logo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -10,7 +11,7 @@ import { toast } from "sonner";
 
 const chartConfig = {
   alfamart: { label: "Alfamart", color: "#B7EB76" },
-  aksesmu: { label: "aksesmu", color: "#FF8730" },
+  aksesmu: { label: "AksesMu", color: "#FF8730" },
   indomaret: { label: "Indomaret", color: "#715DE3" },
 } satisfies ChartConfig;
 
@@ -36,7 +37,7 @@ const channelContext = {
     color: "#B7EB76",
   },
   aksesmu: {
-    label: "aksesmu",
+    label: "AksesMu",
     detail: "400 pembayaran tervalidasi",
     color: "#FF8730",
   },
@@ -103,27 +104,21 @@ export function SelloutChartPanel() {
           </DropdownMenu>
           <div className="grid w-full grid-cols-1 gap-4 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-3 lg:justify-items-end">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary/15 text-foreground">
-                <Store className="h-4 w-4" />
-              </div>
+              <ChannelLogo channel="alfamart" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/30 bg-white p-2 shadow-soft" />
               <div className="min-w-0">
                 <div className="font-medium text-foreground leading-none">Alfamart</div>
                 <div className="mt-1 text-xs">206 outlet aktif</div>
               </div>
             </div>
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FF8730]/15 text-[#FF8730]">
-                <Flame className="h-4 w-4" />
-              </div>
+              <ChannelLogo channel="aksesmu" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/30 bg-white p-2 shadow-soft" />
               <div className="min-w-0">
-                <div className="font-medium text-foreground leading-none">aksesmu</div>
+                <div className="font-medium text-foreground leading-none">AksesMu</div>
                 <div className="mt-1 text-xs">400 pembayaran</div>
               </div>
             </div>
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#715DE3]/15 text-[#715DE3]">
-                <ShoppingCart className="h-4 w-4" />
-              </div>
+              <ChannelLogo channel="indomaret" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/30 bg-white p-2 shadow-soft" />
               <div className="min-w-0">
                 <div className="font-medium text-foreground leading-none">Indomaret</div>
                 <div className="mt-1 text-xs">312 outlet aktif</div>
