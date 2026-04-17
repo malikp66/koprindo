@@ -1,0 +1,149 @@
+{
+  "id": "WF03SFTPPoller",
+  "name": "WF03 - Intake SFTP Poller",
+  "nodes": [
+    {
+      "id": "wf03-schedule",
+      "name": "Schedule SFTP Poller",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        280
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wf03-list",
+      "name": "List SFTP Intake Folder",
+      "type": "n8n-nodes-base.ftp",
+      "typeVersion": 1,
+      "position": [
+        480,
+        280
+      ],
+      "parameters": {
+        "protocol": "sftp",
+        "operation": "list",
+        "path": "={{ $env.SFTP_INBOUND_PATH || '/inbound' }}"
+      }
+    },
+    {
+      "id": "wf03-download",
+      "name": "Download SFTP File",
+      "type": "n8n-nodes-base.ftp",
+      "typeVersion": 1,
+      "position": [
+        740,
+        280
+      ],
+      "parameters": {
+        "protocol": "sftp",
+        "operation": "download",
+        "path": "={{ $json.path || $json.filePath || (($env.SFTP_INBOUND_PATH || '/inbound') + '/' + $json.name) }}"
+      }
+    },
+    {
+      "id": "wf03-envelope",
+      "name": "Build SFTP Batch Envelope",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const i=$input.first(),f=i.binary?.data;\nif(!f?.data)throw new Error('Downloaded SFTP file missing binary data');\nconst a=(f.fileName||i.json.name||'').split('.');\nreturn[{json:{ingressSource:'sftp_poller',sourcePriority:100,sourceType:$env.DEFAULT_SOURCE_TYPE||'sell_out',sourceParty:$env.DEFAULT_SOURCE_PARTY||'ritel_modern',channel:$env.DEFAULT_CHANNEL||'all',periodMonth:Number($env.DEFAULT_PERIOD_MONTH||new Date().getMonth()+1),periodYear:Number($env.DEFAULT_PERIOD_YEAR||new Date().getFullYear()),fileName:f.fileName||i.json.name||'sftp-file.bin',fileExtension:a.length>1?a.pop().toLowerCase():'',mimeType:f.mimeType||'application/octet-stream',fileSizeBytes:f.fileSize||0,fileChecksum:null,uploadedBy:'sftp-poller',receivedAt:new Date().toISOString(),binaryBase64:f.data,storageRef:`sftp://${i.json.path||i.json.filePath||i.json.name}`}}]"
+      }
+    },
+    {
+      "id": "wf03-call-wf04",
+      "name": "Call WF04 Normalize Validate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1260,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-normalize-validate' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule SFTP Poller": {
+      "main": [
+        [
+          {
+            "node": "List SFTP Intake Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List SFTP Intake Folder": {
+      "main": [
+        [
+          {
+            "node": "Download SFTP File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download SFTP File": {
+      "main": [
+        [
+          {
+            "node": "Build SFTP Batch Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build SFTP Batch Envelope": {
+      "main": [
+        [
+          {
+            "node": "Call WF04 Normalize Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "intake",
+    "sftp"
+  ],
+  "active": false,
+  "versionId": "4e84aefd-7949-48e4-a76f-4da7a56f4208"
+}

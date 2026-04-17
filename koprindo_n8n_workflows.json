@@ -1,468 +1,1868 @@
-{
-  "name": "Koprindo Fox 2026 - Master Backend Workflow",
-  "nodes": [
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "hours",
-              "hoursInterval": 12
-            }
-          ]
-        }
-      },
-      "id": "e6bd3ea9-0351-41db-8d13-0ef1bcd10abc",
-      "name": "Schedule Intake (FTP/Drive)",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [
-        250,
-        150
-      ],
-      "notesInFlow": true,
-      "notes": "Workflow 1: Data Ingest"
-    },
-    {
-      "parameters": {
-        "url": "http://example.com/dummy-file.csv",
-        "options": {}
-      },
-      "id": "3be2f857-e160-4cd7-9dbd-bb3ef9a8cf68",
-      "name": "HTTP Download File",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        450,
-        150
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "read",
-        "options": {}
-      },
-      "id": "5dc46c3b-d54b-48af-91f1-331da294c794",
-      "name": "Read Spreadsheet",
-      "type": "n8n-nodes-base.spreadsheetFile",
-      "typeVersion": 2,
-      "position": [
-        650,
-        150
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\nconst requiredFields = [\"channel\", \"sku_code\", \"qty_sell_out\"];\nlet blockingIssues = 0;\n\nitems.forEach(item => {\n  requiredFields.forEach(field => {\n    if (!item.json[field]) blockingIssues++;\n  });\n});\n\nreturn [{\n  json: {\n    batchId: \"b8a0-2f1d-n8n-gen\", \n    sourceType: \"sell_out\",\n    sourceParty: \"ritel_modern\",\n    periodMonth: 9,\n    periodYear: 2026,\n    fileName: \"data_sellout_indomaret.csv\",\n    fileChecksum: \"checksum_dummy\",\n    fileSizeBytes: 1024,\n    records: items.map(i => i.json),\n    qualityScore: blockingIssues > 0 ? 50 : 100,\n    blockingIssueCount: blockingIssues\n  }\n}];"
-      },
-      "id": "92dbd02b-8a8b-4c4f-9582-748ebf5139fb",
-      "name": "Validation Logic",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        850,
-        150
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://localhost:3000/api/intake/batch",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "batchId",
-              "value": "={{$json.batchId}}"
-            },
-            {
-              "name": "sourceType",
-              "value": "={{$json.sourceType}}"
-            },
-            {
-              "name": "sourceParty",
-              "value": "={{$json.sourceParty}}"
-            },
-            {
-              "name": "periodMonth",
-              "value": "={{$json.periodMonth}}"
-            },
-            {
-              "name": "periodYear",
-              "value": "={{$json.periodYear}}"
-            },
-            {
-              "name": "fileName",
-              "value": "={{$json.fileName}}"
-            },
-            {
-              "name": "fileChecksum",
-              "value": "={{$json.fileChecksum}}"
-            },
-            {
-              "name": "fileSizeBytes",
-              "value": "={{$json.fileSizeBytes}}"
-            },
-            {
-              "name": "records",
-              "value": "={{$json.records}}"
-            },
-            {
-              "name": "qualityScore",
-              "value": "={{$json.qualityScore}}"
-            },
-            {
-              "name": "blockingIssueCount",
-              "value": "={{$json.blockingIssueCount}}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "276859dd-b258-4db8-bbd0-e1b9b1e9d129",
-      "name": "Send API Intake",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        1050,
-        150
-      ]
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "0 2 * * *"
-            }
-          ]
-        }
-      },
-      "id": "e2baeb8c-f09b-4654-8c65-d60f4a86bccc",
-      "name": "Cron (Jam 2 Pagi)",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [
-        250,
-        350
-      ],
-      "notesInFlow": true,
-      "notes": "Workflow 2: Reconciliation Variance"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT \n  si.sku_code,\n  SUM(si.qty_sell_in) as total_in,\n  SUM(so.qty_sell_out) as total_out\nFROM sell_in_record si\nJOIN sell_out_record so ON si.sku_code = so.sku_code\nWHERE si.period_key = '2026-09'\nGROUP BY si.sku_code;\n"
-      },
-      "id": "b1b0b5de-8c8a-4db3-96b4-2bda1f0d3a51",
-      "name": "Postgres: Variance Join",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.3,
-      "position": [
-        450,
-        350
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\nlet riskEvents = [];\n\nitems.forEach(item => {\n   let total_in = parseFloat(item.json.total_in);\n   let total_out = parseFloat(item.json.total_out);\n   let variance = (total_in - total_out) / total_in;\n\n   if(variance > 0.5) {\n      riskEvents.push({ periodKey: \"2026-09\", riskType: \"sell_in_sell_out_mismatch\", severity: \"critical\", entityType: \"sku\", entityKey: item.json.sku_code, metricName: \"variance\", observedValue: variance, thresholdValue: 0.50 });\n   } else if (variance > 0.3) {\n      riskEvents.push({ periodKey: \"2026-09\", riskType: \"sell_in_sell_out_mismatch\", severity: \"high\", entityType: \"sku\", entityKey: item.json.sku_code, metricName: \"variance\", observedValue: variance, thresholdValue: 0.30 });\n   }\n});\n\nreturn riskEvents.map(e => ({json: e}));"
-      },
-      "id": "e2f18f9e-c88f-4ed7-94a2-e6e2e5057b32",
-      "name": "Calc Variance Log",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        650,
-        350
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://localhost:3000/api/intake/risk-event",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ $json }}",
-        "options": {}
-      },
-      "id": "edbb97e5-1811-47fb-89c0-9a3d4f131a39",
-      "name": "API Send Risk Event",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        850,
-        350
-      ]
-    },
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "0 1 * * *"
-            }
-          ]
-        }
-      },
-      "id": "ab704403-12ba-4b7f-baf3-0e86b240afb1",
-      "name": "Cron (Jam 1 Pagi)",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [
-        250,
-        550
-      ],
-      "notesInFlow": true,
-      "notes": "Workflow 3: Auto Aging DB"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE payment_record \nSET payment_status = 'overdue',\n    aging_bucket = CASE \n      WHEN (CURRENT_DATE - due_date) <= 30 THEN '0_30'\n      WHEN (CURRENT_DATE - due_date) <= 45 THEN '31_45'\n      ELSE '46_60'\n    END\nWHERE payment_status IN ('unpaid', 'partial') AND due_date < CURRENT_DATE;\n"
-      },
-      "id": "4d142ab1-030a-4712-ba53-62a9cba2ecca",
-      "name": "Postgres (Update Overdue)",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.3,
-      "position": [
-        450,
-        550
-      ]
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "escalation-alert",
-        "options": {}
-      },
-      "id": "1be68b57-a36c-48c0-bc66-3d7f02cdff0c",
-      "name": "Push Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        250,
-        750
-      ],
-      "notesInFlow": true,
-      "notes": "Workflow 4: Notification Alerts",
-      "webhookId": "9740dc33-fd4a-40a1-8d26-b8cb79be6a8d"
-    },
-    {
-      "parameters": {
-        "rules": {
-          "values": [
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict"
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.severity }}",
-                    "rightValue": "high",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              }
-            },
-            {
-              "conditions": {
-                "options": {
-                  "caseSensitive": true,
-                  "leftValue": "",
-                  "typeValidation": "strict"
-                },
-                "conditions": [
-                  {
-                    "leftValue": "={{ $json.severity }}",
-                    "rightValue": "critical",
-                    "operator": {
-                      "type": "string",
-                      "operation": "equals"
-                    }
-                  }
-                ],
-                "combinator": "and"
-              }
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "9dc9a3b6-20d0-4bf6-b5eb-7be696c7db90",
-      "name": "Severity Check Switch",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 2.1,
-      "position": [
-        450,
-        750
-      ]
-    },
-    {
-      "parameters": {
-        "channel": "#ops-high",
-        "text": "=Peringatan High Risk!\nIsu: {{$json.riskType}}\nDimana: {{$json.entityKey}}\nValue: {{$json.observedValue}}"
-      },
-      "id": "ff9b73f7-9ab0-4251-bef5-21fb9d18b67b",
-      "name": "Slack (High)",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.2,
-      "position": [
-        700,
-        700
-      ]
-    },
-    {
-      "parameters": {
-        "channel": "#management-critical",
-        "text": "=KRITIKAL RISK!\nIsu: {{$json.riskType}}\nDimana: {{$json.entityKey}}\nValue: {{$json.observedValue}}"
-      },
-      "id": "fb21b4a0-53bc-42b7-a3ee-82a170fb22ea",
-      "name": "Slack (Critical)",
-      "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.2,
-      "position": [
-        700,
-        800
-      ]
-    }
-  ],
-  "pinData": {},
-  "connections": {
-    "Schedule Intake (FTP/Drive)": {
-      "main": [
-        [
-          {
-            "node": "HTTP Download File",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "HTTP Download File": {
-      "main": [
-        [
-          {
-            "node": "Read Spreadsheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Spreadsheet": {
-      "main": [
-        [
-          {
-            "node": "Validation Logic",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Validation Logic": {
-      "main": [
-        [
-          {
-            "node": "Send API Intake",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Cron (Jam 2 Pagi)": {
-      "main": [
-        [
-          {
-            "node": "Postgres: Variance Join",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Postgres: Variance Join": {
-      "main": [
-        [
-          {
-            "node": "Calc Variance Log",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Calc Variance Log": {
-      "main": [
-        [
-          {
-            "node": "API Send Risk Event",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Cron (Jam 1 Pagi)": {
-      "main": [
-        [
-          {
-            "node": "Postgres (Update Overdue)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Push Webhook": {
-      "main": [
-        [
-          {
-            "node": "Severity Check Switch",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Severity Check Switch": {
-      "main": [
-        [
-          {
-            "node": "Slack (High)",
-            "type": "main",
-            "index": 0
-          }
+[
+  {
+    "id": "WF01WebAppUpload",
+    "name": "WF01 - Intake Web App Manual Upload",
+    "nodes": [
+      {
+        "id": "wf01-webhook",
+        "name": "Manual Upload Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          260,
+          280
         ],
-        [
-          {
-            "node": "Slack (Critical)",
-            "type": "main",
-            "index": 0
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "koprindo-manual-upload",
+          "responseMode": "responseNode",
+          "options": {
+            "binaryData": true
           }
+        },
+        "webhookId": "koprindo-manual-upload",
+        "notes": "Manual upload dari web app",
+        "notesInFlow": true
+      },
+      {
+        "id": "wf01-envelope",
+        "name": "Build Raw Batch Envelope",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          520,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const i=$input.first();\nconst b=i.json.body??i.json,f=i.binary?.data;\nif(!f?.data)throw new Error('Binary file required in field data');\nreturn[{json:{ingressSource:'web_app_manual_upload',sourcePriority:300,sourceType:b.sourceType,sourceParty:b.sourceParty,channel:b.channel??'all',periodMonth:Number(b.periodMonth),periodYear:Number(b.periodYear),fileName:f.fileName??b.fileName??'manual-upload.bin',fileExtension:(f.fileExtension||f.fileName?.split('.').pop()||'').toLowerCase(),mimeType:f.mimeType??b.mimeType??'application/octet-stream',fileSizeBytes:f.fileSize??b.fileSizeBytes??0,fileChecksum:b.fileChecksum??null,uploadedBy:b.uploadedBy??'web-app-user',receivedAt:b.receivedAt??new Date().toISOString(),binaryBase64:f.data,storageRef:b.storageRef??'webhook://manual-upload'}}]"
+        }
+      },
+      {
+        "id": "wf01-call-wf04",
+        "name": "Call WF04 Normalize Validate",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          800,
+          280
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-normalize-validate' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf01-respond",
+        "name": "Respond To Web App",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          1080,
+          280
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Manual Upload Webhook": {
+        "main": [
+          [
+            {
+              "node": "Build Raw Batch Envelope",
+              "type": "main",
+              "index": 0
+            }
+          ]
         ]
-      ]
-    }
+      },
+      "Build Raw Batch Envelope": {
+        "main": [
+          [
+            {
+              "node": "Call WF04 Normalize Validate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call WF04 Normalize Validate": {
+        "main": [
+          [
+            {
+              "node": "Respond To Web App",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "intake",
+      "manual-upload"
+    ],
+    "active": false,
+    "versionId": "0c9c2f62-0f09-44ae-a513-84c1c647f01a"
   },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
+  {
+    "id": "WF02GoogleDrivePoller",
+    "name": "WF02 - Intake Google Drive Poller",
+    "nodes": [
+      {
+        "id": "wf02-schedule",
+        "name": "Schedule Drive Poller",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          220,
+          280
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours",
+                "hoursInterval": 1
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wf02-search",
+        "name": "Search Intake Folder",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          480,
+          280
+        ],
+        "parameters": {
+          "resource": "fileFolder",
+          "queryString": "*",
+          "returnAll": true,
+          "filter": {
+            "folderId": {
+              "__rl": true,
+              "value": "={{ $env.GOOGLE_DRIVE_SHARED_FOLDER_ID }}",
+              "mode": "id"
+            }
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wf02-download",
+        "name": "Download Google Drive File",
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          740,
+          280
+        ],
+        "parameters": {
+          "operation": "download",
+          "fileId": {
+            "__rl": true,
+            "value": "={{ $json.id }}",
+            "mode": "id"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wf02-envelope",
+        "name": "Build Drive Batch Envelope",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const i=$input.first(),f=i.binary?.data;\nif(!f?.data)throw new Error('Downloaded Google Drive file missing binary data');\nconst a=(f.fileName||'').split('.');\nreturn[{json:{ingressSource:'google_drive_poller',sourcePriority:200,sourceType:$env.DEFAULT_SOURCE_TYPE||'sell_out',sourceParty:$env.DEFAULT_SOURCE_PARTY||'ritel_modern',channel:$env.DEFAULT_CHANNEL||'all',periodMonth:Number($env.DEFAULT_PERIOD_MONTH||new Date().getMonth()+1),periodYear:Number($env.DEFAULT_PERIOD_YEAR||new Date().getFullYear()),fileName:f.fileName,fileExtension:a.length>1?a.pop().toLowerCase():'',mimeType:f.mimeType||'application/octet-stream',fileSizeBytes:f.fileSize||0,fileChecksum:null,uploadedBy:'google-drive-poller',receivedAt:new Date().toISOString(),binaryBase64:f.data,storageRef:`gdrive://${i.json.id}`,originalFileId:i.json.id}}]"
+        }
+      },
+      {
+        "id": "wf02-call-wf04",
+        "name": "Call WF04 Normalize Validate",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1260,
+          280
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-normalize-validate' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Schedule Drive Poller": {
+        "main": [
+          [
+            {
+              "node": "Search Intake Folder",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Search Intake Folder": {
+        "main": [
+          [
+            {
+              "node": "Download Google Drive File",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download Google Drive File": {
+        "main": [
+          [
+            {
+              "node": "Build Drive Batch Envelope",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Drive Batch Envelope": {
+        "main": [
+          [
+            {
+              "node": "Call WF04 Normalize Validate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "intake",
+      "google-drive"
+    ],
+    "active": false,
+    "versionId": "651f5f61-fb22-46cf-94df-35f1e2b51f42"
   },
-  "versionId": "df16b6bb-fdf5-4acc-adae-8de5a9a16f6b",
-  "meta": {
-    "instanceId": "local-dev"
+  {
+    "id": "WF03SFTPPoller",
+    "name": "WF03 - Intake SFTP Poller",
+    "nodes": [
+      {
+        "id": "wf03-schedule",
+        "name": "Schedule SFTP Poller",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          220,
+          280
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours",
+                "hoursInterval": 1
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wf03-list",
+        "name": "List SFTP Intake Folder",
+        "type": "n8n-nodes-base.ftp",
+        "typeVersion": 1,
+        "position": [
+          480,
+          280
+        ],
+        "parameters": {
+          "protocol": "sftp",
+          "operation": "list",
+          "path": "={{ $env.SFTP_INBOUND_PATH || '/inbound' }}"
+        }
+      },
+      {
+        "id": "wf03-download",
+        "name": "Download SFTP File",
+        "type": "n8n-nodes-base.ftp",
+        "typeVersion": 1,
+        "position": [
+          740,
+          280
+        ],
+        "parameters": {
+          "protocol": "sftp",
+          "operation": "download",
+          "path": "={{ $json.path || $json.filePath || (($env.SFTP_INBOUND_PATH || '/inbound') + '/' + $json.name) }}"
+        }
+      },
+      {
+        "id": "wf03-envelope",
+        "name": "Build SFTP Batch Envelope",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const i=$input.first(),f=i.binary?.data;\nif(!f?.data)throw new Error('Downloaded SFTP file missing binary data');\nconst a=(f.fileName||i.json.name||'').split('.');\nreturn[{json:{ingressSource:'sftp_poller',sourcePriority:100,sourceType:$env.DEFAULT_SOURCE_TYPE||'sell_out',sourceParty:$env.DEFAULT_SOURCE_PARTY||'ritel_modern',channel:$env.DEFAULT_CHANNEL||'all',periodMonth:Number($env.DEFAULT_PERIOD_MONTH||new Date().getMonth()+1),periodYear:Number($env.DEFAULT_PERIOD_YEAR||new Date().getFullYear()),fileName:f.fileName||i.json.name||'sftp-file.bin',fileExtension:a.length>1?a.pop().toLowerCase():'',mimeType:f.mimeType||'application/octet-stream',fileSizeBytes:f.fileSize||0,fileChecksum:null,uploadedBy:'sftp-poller',receivedAt:new Date().toISOString(),binaryBase64:f.data,storageRef:`sftp://${i.json.path||i.json.filePath||i.json.name}`}}]"
+        }
+      },
+      {
+        "id": "wf03-call-wf04",
+        "name": "Call WF04 Normalize Validate",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1260,
+          280
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-normalize-validate' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Schedule SFTP Poller": {
+        "main": [
+          [
+            {
+              "node": "List SFTP Intake Folder",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "List SFTP Intake Folder": {
+        "main": [
+          [
+            {
+              "node": "Download SFTP File",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Download SFTP File": {
+        "main": [
+          [
+            {
+              "node": "Build SFTP Batch Envelope",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build SFTP Batch Envelope": {
+        "main": [
+          [
+            {
+              "node": "Call WF04 Normalize Validate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "intake",
+      "sftp"
+    ],
+    "active": false,
+    "versionId": "4e84aefd-7949-48e4-a76f-4da7a56f4208"
   },
-  "id": "tD2vI1K2pBAsV9kZ",
-  "tags": []
-}
+  {
+    "id": "WF04NormalizeValidate",
+    "name": "WF04 - Normalize Validate Batch",
+    "nodes": [
+      {
+        "id": "wf04-webhook",
+        "name": "Normalize Validate Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          220,
+          360
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "koprindo-normalize-validate",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "webhookId": "koprindo-normalize-validate"
+      },
+      {
+        "id": "wf04-rehydrate",
+        "name": "Rehydrate Binary Envelope",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          500,
+          360
+        ],
+        "parameters": {
+          "jsCode": "const i=$input.first().json;\nconst req=['sourceType','sourceParty','periodMonth','periodYear','fileName','binaryBase64'];\nconst miss=req.filter(f=>i[f]===undefined||i[f]===null||i[f]==='');\nif(miss.length)throw new Error(`Missing raw batch envelope fields: ${miss.join(', ')}`);\nconst ext=(i.fileExtension||i.fileName.split('.').pop()||'').toLowerCase();\nreturn[{json:{...i,fileExtension:ext,parserCandidate:['csv','xlsx','xls'].includes(ext)?'spreadsheet':'ai_fallback'},binary:{data:{data:i.binaryBase64,fileName:i.fileName,mimeType:i.mimeType||'application/octet-stream'}}}]"
+        }
+      },
+      {
+        "id": "wf04-read",
+        "name": "Read Spreadsheet",
+        "type": "n8n-nodes-base.spreadsheetFile",
+        "typeVersion": 2,
+        "position": [
+          760,
+          240
+        ],
+        "parameters": {
+          "operation": "read",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf04-normalize",
+        "name": "Normalize And Score",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1020,
+          240
+        ],
+        "parameters": {
+          "jsCode": "const rows=$input.all();\nif(!rows.length)return[{json:{needsAiFallback:true,fallbackReason:'no_rows_from_spreadsheet'}}];\nconst keys=Object.keys(rows[0].json).map(k=>k.toLowerCase());\nconst ok=['period','channel','sku_code','qty_sell_out','qty_sell_in','invoice_id','invoice_amount','closing_stock'];\nif(!ok.some(k=>keys.includes(k)))return[{json:{needsAiFallback:true,fallbackReason:'unknown_headers',sampleRows:rows.slice(0,5).map(x=>x.json)}}];\nconst e=$('Rehydrate Binary Envelope').first().json;\nconst rec=rows.map((x,i)=>{const r=x.json;return{channel:String(r.channel||e.channel||'all').toLowerCase(),regionCode:r.region_code||r.regionCode||'UNKNOWN_REGION',branchCode:r.branch_code||r.branchCode||'UNKNOWN_BRANCH',outletCode:r.outlet_code||r.outletCode||'UNKNOWN_OUTLET',skuCode:r.sku_code||r.skuCode||r.invoice_id||`ROW_${i+1}`,qtySellOut:r.qty_sell_out??r.qtySellOut??0,qtySellIn:r.qty_sell_in??r.qtySellIn??0,salesAmount:r.sales_amount??r.salesAmount??0,openingStock:r.opening_stock??r.openingStock??0,closingStock:r.closing_stock??r.closingStock??0,rawRowRef:r.raw_row_ref||`spreadsheet_row_${i+1}`}});\nconst b=rec.filter(r=>!r.skuCode).length,w=rec.filter(r=>Number(r.qtySellOut||r.qtySellIn||0)===0).length,s=Math.max(0,100-b*10-w*2),q=b>0||s<75?'blocked':s<90?'provisional':'passed';\nreturn[{json:{batchId:$execution.id,sourceType:e.sourceType,sourceParty:e.sourceParty,channel:e.channel,periodMonth:e.periodMonth,periodYear:e.periodYear,fileName:e.fileName,fileChecksum:e.fileChecksum||`derived:${$execution.id}`,fileSizeBytes:e.fileSizeBytes||0,records:rec,qualityScore:s,blockingIssueCount:b,warningIssueCount:w,qualityStatus:q,validationStatus:q==='blocked'?'rejected':'validated',aiAssisted:false,parserMode:'deterministic',qualityNotes:w>0?['Some rows have zero quantities and should be reviewed.']:[]}}]"
+        }
+      },
+      {
+        "id": "wf04-ai-route",
+        "name": "Needs AI Fallback?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1020,
+          480
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "wf04-ai-condition",
+                "leftValue": "={{ $json.needsAiFallback || $('Rehydrate Binary Envelope').first().json.parserCandidate === 'ai_fallback' }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wf04-call-wf05",
+        "name": "Call WF05 AI Parser",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1280,
+          400
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-ai-parser' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { ...$('Rehydrate Binary Envelope').first().json, fallbackReason: $json.fallbackReason || 'unsupported_extension', sampleRows: $json.sampleRows || [] } }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf04-call-wf06-d",
+        "name": "Call WF06 Publish Deterministic",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1280,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-publish-batch' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf04-call-wf06-a",
+        "name": "Call WF06 Publish AI Parsed",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1540,
+          400
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-publish-batch' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf04-r1",
+        "name": "Respond Deterministic Result",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          1540,
+          200
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      },
+      {
+        "id": "wf04-r2",
+        "name": "Respond AI Result",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          1800,
+          400
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Normalize Validate Webhook": {
+        "main": [
+          [
+            {
+              "node": "Rehydrate Binary Envelope",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Rehydrate Binary Envelope": {
+        "main": [
+          [
+            {
+              "node": "Read Spreadsheet",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Needs AI Fallback?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Read Spreadsheet": {
+        "main": [
+          [
+            {
+              "node": "Normalize And Score",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalize And Score": {
+        "main": [
+          [
+            {
+              "node": "Call WF06 Publish Deterministic",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Needs AI Fallback?": {
+        "main": [
+          [
+            {
+              "node": "Call WF05 AI Parser",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      },
+      "Call WF05 AI Parser": {
+        "main": [
+          [
+            {
+              "node": "Call WF06 Publish AI Parsed",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call WF06 Publish Deterministic": {
+        "main": [
+          [
+            {
+              "node": "Respond Deterministic Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call WF06 Publish AI Parsed": {
+        "main": [
+          [
+            {
+              "node": "Respond AI Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "intake",
+      "validation"
+    ],
+    "active": false,
+    "versionId": "fe45cc6c-59e5-4d39-8d4d-f45fa78b18d0"
+  },
+  {
+    "id": "WF05AIParser",
+    "name": "WF05 - AI Fallback Parser",
+    "nodes": [
+      {
+        "id": "wf05-webhook",
+        "name": "AI Parser Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          220,
+          280
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "koprindo-ai-parser",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "webhookId": "koprindo-ai-parser"
+      },
+      {
+        "id": "wf05-build",
+        "name": "Build OpenAI Parser Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          520,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const e=$input.first().json;\nconst schema={type:'object',additionalProperties:false,properties:{records:{type:'array',items:{type:'object',additionalProperties:false,properties:{channel:{type:'string'},regionCode:{type:'string'},branchCode:{type:'string'},outletCode:{type:'string'},skuCode:{type:'string'},qtySellOut:{type:'number'},qtySellIn:{type:'number'},salesAmount:{type:'number'},openingStock:{type:'number'},closingStock:{type:'number'},rawRowRef:{type:'string'}},required:['channel','regionCode','branchCode','outletCode','skuCode','rawRowRef']}},notes:{type:'array',items:{type:'string'}}},required:['records']};\nreturn[{json:{envelope:e,openAiRequest:{model:$env.OPENAI_MODEL_PARSER||'gpt-4.1-mini',input:[{role:'system',content:[{type:'input_text',text:'Normalize messy intake files into deterministic JSON for Koprindo FOX. Never invent quality status or business decisions. Output only the schema.'}]},{role:'user',content:[{type:'input_text',text:JSON.stringify({sourceType:e.sourceType,sourceParty:e.sourceParty,channel:e.channel,periodMonth:e.periodMonth,periodYear:e.periodYear,fallbackReason:e.fallbackReason,sampleRows:e.sampleRows||[]})}]}],text:{format:{type:'json_schema',name:'koprindo_ai_parse_result',schema,strict:true}}}}}]"
+        }
+      },
+      {
+        "id": "wf05-openai",
+        "name": "OpenAI Responses Parser",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          820,
+          280
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.openai.com/v1/responses",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{$env.OPENAI_API_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.openAiRequest }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf05-normalize",
+        "name": "Normalize AI Parse Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const e=$('Build OpenAI Parser Request').first().json.envelope,r=$input.first().json,t=r.output_text||r.output?.[0]?.content?.[0]?.text||'{}',p=JSON.parse(t),rec=Array.isArray(p.records)?p.records:[],b=rec.length===0?1:0,w=Array.isArray(p.notes)?p.notes.length:0,s=Math.max(0,88-b*10-w),q=b>0?'blocked':s<90?'provisional':'passed';\nreturn[{json:{batchId:$execution.id,sourceType:e.sourceType,sourceParty:e.sourceParty,channel:e.channel,periodMonth:e.periodMonth,periodYear:e.periodYear,fileName:e.fileName,fileChecksum:e.fileChecksum||`derived:${$execution.id}`,fileSizeBytes:e.fileSizeBytes||0,records:rec,qualityScore:s,blockingIssueCount:b,warningIssueCount:w,qualityStatus:q,validationStatus:q==='blocked'?'rejected':'validated',aiAssisted:true,parserMode:'ai_fallback',qualityNotes:p.notes||[]}}]"
+        }
+      },
+      {
+        "id": "wf05-respond",
+        "name": "Respond AI Parse Result",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          1360,
+          280
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      }
+    ],
+    "connections": {
+      "AI Parser Webhook": {
+        "main": [
+          [
+            {
+              "node": "Build OpenAI Parser Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build OpenAI Parser Request": {
+        "main": [
+          [
+            {
+              "node": "OpenAI Responses Parser",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Responses Parser": {
+        "main": [
+          [
+            {
+              "node": "Normalize AI Parse Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalize AI Parse Result": {
+        "main": [
+          [
+            {
+              "node": "Respond AI Parse Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "intake",
+      "ai-parser"
+    ],
+    "active": false,
+    "versionId": "cb1d41b7-fc71-457c-b9fa-ff4844ea1f6b"
+  },
+  {
+    "id": "WF06PublishBatch",
+    "name": "WF06 - Publish Batch To Web App API",
+    "nodes": [
+      {
+        "id": "wf06-webhook",
+        "name": "Publish Batch Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          220,
+          280
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "koprindo-publish-batch",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "webhookId": "koprindo-publish-batch"
+      },
+      {
+        "id": "wf06-ok",
+        "name": "Publishable Quality Status?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          500,
+          280
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "wf06-condition",
+                "leftValue": "={{ ['passed', 'provisional'].includes($json.qualityStatus) }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wf06-post",
+        "name": "POST Intake Batch API",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          780,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.KOPRINDO_WEBAPP_BASE_URL + '/api/intake/batch' }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "={{ $env.KOPRINDO_WEBAPP_API_KEY || \"\" }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf06-blocked",
+        "name": "Build Blocked Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          780,
+          360
+        ],
+        "parameters": {
+          "jsCode": "return[{json:{success:false,publishAttempted:false,message:'Batch blocked by deterministic quality gate.',batchId:$json.batchId,qualityStatus:$json.qualityStatus,blockingIssueCount:$json.blockingIssueCount,qualityScore:$json.qualityScore,qualityNotes:$json.qualityNotes||[]}}]"
+        }
+      },
+      {
+        "id": "wf06-r1",
+        "name": "Respond Publish Result",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          1060,
+          200
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      },
+      {
+        "id": "wf06-r2",
+        "name": "Respond Blocked Result",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          1060,
+          360
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Publish Batch Webhook": {
+        "main": [
+          [
+            {
+              "node": "Publishable Quality Status?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Publishable Quality Status?": {
+        "main": [
+          [
+            {
+              "node": "POST Intake Batch API",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Build Blocked Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "POST Intake Batch API": {
+        "main": [
+          [
+            {
+              "node": "Respond Publish Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Blocked Result": {
+        "main": [
+          [
+            {
+              "node": "Respond Blocked Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "intake",
+      "publish"
+    ],
+    "active": false,
+    "versionId": "922e1fea-ad58-4c90-a087-dc3f04c2621a"
+  },
+  {
+    "id": "WF07ReconciliationRisk",
+    "name": "WF07 - Reconciliation Risk Evaluation",
+    "nodes": [
+      {
+        "id": "wf07-schedule",
+        "name": "Schedule Reconciliation",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          220,
+          280
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 2 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wf07-query",
+        "name": "Query Reconciliation Metrics",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.3,
+        "position": [
+          520,
+          280
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT si.period_key,COALESCE(si.channel,so.channel) AS channel,COALESCE(si.branch_code,so.branch_code) AS branch_code,COALESCE(si.sku_code,so.sku_code) AS sku_code,SUM(COALESCE(si.qty_sell_in,0))::numeric AS total_in,SUM(COALESCE(so.qty_sell_out,0))::numeric AS total_out FROM sell_in_record si FULL OUTER JOIN sell_out_record so ON si.period_key=so.period_key AND si.channel=so.channel AND si.branch_code=so.branch_code AND si.sku_code=so.sku_code GROUP BY 1,2,3,4;"
+        }
+      },
+      {
+        "id": "wf07-build",
+        "name": "Build Reconciliation Risks",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          820,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const ev=[];\nfor(const it of $input.all()){const ti=Number(it.json.total_in||0),to=Number(it.json.total_out||0);if(ti<=0)continue;const v=(ti-to)/ti;let s=null,t=null;if(v>.5){s='critical';t=.5}else if(v>.3){s='high';t=.3}else if(v>.15){s='warning';t=.15}if(!s)continue;ev.push({periodKey:it.json.period_key,riskType:'sell_in_sell_out_mismatch',severity:s,entityType:'branch',entityKey:`${it.json.channel||'all'}:${it.json.branch_code||'UNKNOWN'}:${it.json.sku_code||'UNKNOWN'}`,metricName:'variance_sell_in_sell_out_pct',observedValue:Number(v.toFixed(4)),thresholdValue:t,status:'open',ownerRole:s==='warning'?'bd':'management'})}\nreturn ev.map(json=>({json}))"
+        }
+      },
+      {
+        "id": "wf07-post",
+        "name": "POST Risk Events API",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1100,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.KOPRINDO_WEBAPP_BASE_URL + '/api/intake/risk-event' }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "={{ $env.KOPRINDO_WEBAPP_API_KEY || \"\" }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf07-if",
+        "name": "High Or Critical Only",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1100,
+          380
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "wf07-if1",
+                "leftValue": "={{ ['high', 'critical'].includes($json.severity) }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wf07-notify",
+        "name": "Call WF09 Escalation Router",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1380,
+          380
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-wa-escalation' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { ...$json, sourceWorkflow: 'WF07', fallbackSummary: `Risk ${$json.riskType} pada ${$json.entityKey} melewati ambang ${$json.thresholdValue}.` } }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Schedule Reconciliation": {
+        "main": [
+          [
+            {
+              "node": "Query Reconciliation Metrics",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query Reconciliation Metrics": {
+        "main": [
+          [
+            {
+              "node": "Build Reconciliation Risks",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Reconciliation Risks": {
+        "main": [
+          [
+            {
+              "node": "POST Risk Events API",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "High Or Critical Only",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "High Or Critical Only": {
+        "main": [
+          [
+            {
+              "node": "Call WF09 Escalation Router",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "risk",
+      "reconciliation"
+    ],
+    "active": false,
+    "versionId": "5b24d567-f395-4c62-b92c-eb6410ffb26b"
+  },
+  {
+    "id": "WF08PaymentAging",
+    "name": "WF08 - Payment Aging Monitor",
+    "nodes": [
+      {
+        "id": "wf08-schedule",
+        "name": "Schedule Payment Aging",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          220,
+          280
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 1 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "wf08-query",
+        "name": "Query Aging Candidates",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.3,
+        "position": [
+          500,
+          280
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT payment_id,invoice_id,due_date,invoice_amount,paid_amount,payment_status,CURRENT_DATE-due_date AS overdue_days,to_char(CURRENT_DATE,'YYYY-MM') AS period_key FROM payment_record WHERE payment_status IN ('unpaid','partial','overdue') AND due_date<CURRENT_DATE;"
+        }
+      },
+      {
+        "id": "wf08-build",
+        "name": "Build Payment Events",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          780,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const ev=[];\nfor(const it of $input.all()){const d=Number(it.json.overdue_days||0);if(d<=0)continue;let s='warning',t=1;if(d>30){s='critical';t=30}else if(d>7){s='high';t=7}ev.push({paymentId:it.json.payment_id,periodKey:it.json.period_key,riskType:d>45?'payment_aging_critical':'payment_overdue',severity:s,entityType:'invoice',entityKey:it.json.invoice_id,metricName:'overdue_days',observedValue:d,thresholdValue:t,status:'open',ownerRole:'finance'})}\nreturn ev.map(json=>({json}))"
+        }
+      },
+      {
+        "id": "wf08-update",
+        "name": "Update Overdue Status",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.3,
+        "position": [
+          1040,
+          160
+        ],
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE payment_record SET payment_status='overdue',aging_bucket=CASE WHEN CURRENT_DATE-due_date<=30 THEN '0_30' WHEN CURRENT_DATE-due_date<=45 THEN '31_45' WHEN CURRENT_DATE-due_date<=60 THEN '46_60' ELSE '61_plus' END,aging_days=CURRENT_DATE-invoice_date WHERE payment_id='{{ $json.paymentId }}';"
+        }
+      },
+      {
+        "id": "wf08-post",
+        "name": "POST Payment Risk Event",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1040,
+          360
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.KOPRINDO_WEBAPP_BASE_URL + '/api/intake/risk-event' }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-api-key",
+                "value": "={{ $env.KOPRINDO_WEBAPP_API_KEY || \"\" }}"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { periodKey: $json.periodKey, riskType: $json.riskType, severity: $json.severity, entityType: $json.entityType, entityKey: $json.entityKey, metricName: $json.metricName, observedValue: $json.observedValue, thresholdValue: $json.thresholdValue, status: $json.status, ownerRole: $json.ownerRole } }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf08-if",
+        "name": "Escalate High Critical",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          1320,
+          280
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 3
+            },
+            "conditions": [
+              {
+                "id": "wf08-if1",
+                "leftValue": "={{ ['high', 'critical'].includes($json.severity) }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        }
+      },
+      {
+        "id": "wf08-notify",
+        "name": "Call WF09 Escalation Router",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1600,
+          280
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-wa-escalation' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { ...$json, sourceWorkflow: 'WF08', fallbackSummary: `Invoice ${$json.entityKey} telah melewati due date selama ${$json.observedValue} hari.` } }}",
+          "options": {}
+        }
+      }
+    ],
+    "connections": {
+      "Schedule Payment Aging": {
+        "main": [
+          [
+            {
+              "node": "Query Aging Candidates",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Query Aging Candidates": {
+        "main": [
+          [
+            {
+              "node": "Build Payment Events",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Payment Events": {
+        "main": [
+          [
+            {
+              "node": "Update Overdue Status",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "POST Payment Risk Event",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Escalate High Critical",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Escalate High Critical": {
+        "main": [
+          [
+            {
+              "node": "Call WF09 Escalation Router",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          []
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "risk",
+      "payment"
+    ],
+    "active": false,
+    "versionId": "1bb4f538-5817-42cc-8d20-bd5be06b2e2e"
+  },
+  {
+    "id": "WF09WAEscalation",
+    "name": "WF09 - WhatsApp Cloud Escalation Router",
+    "nodes": [
+      {
+        "id": "wf09-webhook",
+        "name": "WA Escalation Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          220,
+          280
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "koprindo-wa-escalation",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "webhookId": "koprindo-wa-escalation"
+      },
+      {
+        "id": "wf09-route",
+        "name": "Route Recipient And Fallback",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          520,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const i=$input.first().json;\nconst to=i.severity==='critical'?($env.OPS_WA_RECIPIENT_CRITICAL||$env.OPS_WA_RECIPIENT_HIGH):($env.OPS_WA_RECIPIENT_HIGH||$env.OPS_WA_RECIPIENT_CRITICAL);\nreturn[{json:{...i,waRecipient:to,fallbackSummary:i.fallbackSummary||`Risk ${i.riskType} pada ${i.entityKey} membutuhkan tindak lanjut.`}}]"
+        }
+      },
+      {
+        "id": "wf09-call",
+        "name": "Call WF10 AI Summary",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          800,
+          280
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-ai-summary' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf09-compose",
+        "name": "Compose WhatsApp Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1080,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const s=$('Route Recipient And Fallback').first().json,sum=$input.first().json.summary||s.fallbackSummary,l=String(s.severity||'warning').toUpperCase();\nreturn[{json:{to:s.waRecipient,messageBody:`[${l}] ${sum}\\nEntity: ${s.entityKey}\\nMetric: ${s.metricName}\\nObserved: ${s.observedValue}\\nThreshold: ${s.thresholdValue}`,original:s}}]"
+        }
+      },
+      {
+        "id": "wf09-send",
+        "name": "Send WhatsApp Cloud API",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1360,
+          280
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ 'https://graph.facebook.com/' + ($env.META_WABA_API_VERSION || 'v22.0') + '/' + $env.META_WABA_PHONE_NUMBER_ID + '/messages' }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{$env.META_WABA_ACCESS_TOKEN}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ { messaging_product: 'whatsapp', to: $json.to, type: 'text', text: { preview_url: false, body: $json.messageBody } } }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf09-respond",
+        "name": "Respond WA Result",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          1640,
+          280
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ { success: true, recipient: $('Route Recipient And Fallback').first().json.waRecipient, summary: $('Compose WhatsApp Payload').first().json.messageBody, providerResponse: $json } }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      }
+    ],
+    "connections": {
+      "WA Escalation Webhook": {
+        "main": [
+          [
+            {
+              "node": "Route Recipient And Fallback",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Route Recipient And Fallback": {
+        "main": [
+          [
+            {
+              "node": "Call WF10 AI Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call WF10 AI Summary": {
+        "main": [
+          [
+            {
+              "node": "Compose WhatsApp Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Compose WhatsApp Payload": {
+        "main": [
+          [
+            {
+              "node": "Send WhatsApp Cloud API",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send WhatsApp Cloud API": {
+        "main": [
+          [
+            {
+              "node": "Respond WA Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "notification",
+      "whatsapp"
+    ],
+    "active": false,
+    "versionId": "40bcaf47-e564-4572-a3ec-b2b39b509f95"
+  },
+  {
+    "id": "WF10AISummary",
+    "name": "WF10 - AI Notification Summary Builder",
+    "nodes": [
+      {
+        "id": "wf10-webhook",
+        "name": "AI Summary Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          220,
+          280
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "koprindo-ai-summary",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "webhookId": "koprindo-ai-summary"
+      },
+      {
+        "id": "wf10-build",
+        "name": "Build Summary Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          520,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const i=$input.first().json;\nreturn[{json:{original:i,openAiRequest:{model:$env.OPENAI_MODEL_SUMMARY||'gpt-4.1-mini',input:[{role:'system',content:[{type:'input_text',text:'Ringkas alert operasional dalam bahasa Indonesia formal. Maksimal dua kalimat. Jangan mengubah angka, severity, entity, atau threshold.'}]},{role:'user',content:[{type:'input_text',text:JSON.stringify({severity:i.severity,riskType:i.riskType,entityType:i.entityType,entityKey:i.entityKey,metricName:i.metricName,observedValue:i.observedValue,thresholdValue:i.thresholdValue,ownerRole:i.ownerRole,periodKey:i.periodKey})}]}],text:{format:{type:'json_schema',name:'koprindo_ai_summary',schema:{type:'object',additionalProperties:false,properties:{summary:{type:'string'}},required:['summary']},strict:true}}}}}]"
+        }
+      },
+      {
+        "id": "wf10-openai",
+        "name": "OpenAI Responses Summary",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          820,
+          280
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.openai.com/v1/responses",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{$env.OPENAI_API_KEY}}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ $json.openAiRequest }}",
+          "options": {}
+        }
+      },
+      {
+        "id": "wf10-parse",
+        "name": "Parse Summary Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1100,
+          280
+        ],
+        "parameters": {
+          "jsCode": "const o=$('Build Summary Request').first().json.original,r=$input.first().json,t=r.output_text||r.output?.[0]?.content?.[0]?.text||'{}';\nlet s=o.fallbackSummary||`Risk ${o.riskType} pada ${o.entityKey}.`;\ntry{s=JSON.parse(t).summary||s}catch(e){}\nreturn[{json:{summary:s}}]"
+        }
+      },
+      {
+        "id": "wf10-respond",
+        "name": "Respond Summary",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          1360,
+          280
+        ],
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        }
+      }
+    ],
+    "connections": {
+      "AI Summary Webhook": {
+        "main": [
+          [
+            {
+              "node": "Build Summary Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Summary Request": {
+        "main": [
+          [
+            {
+              "node": "OpenAI Responses Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Responses Summary": {
+        "main": [
+          [
+            {
+              "node": "Parse Summary Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Summary Result": {
+        "main": [
+          [
+            {
+              "node": "Respond Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "instanceId": "koprindo-hybrid-v1",
+      "templateCredsSetupCompleted": false
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "timezone": "Asia/Jakarta"
+    },
+    "tags": [
+      "koprindo",
+      "notification",
+      "ai-summary"
+    ],
+    "active": false,
+    "versionId": "f90791f4-7190-45be-a845-ff7d3f0bbdb2"
+  }
+]

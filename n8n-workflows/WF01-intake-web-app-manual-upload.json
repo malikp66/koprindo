@@ -1,0 +1,126 @@
+{
+  "id": "WF01WebAppUpload",
+  "name": "WF01 - Intake Web App Manual Upload",
+  "nodes": [
+    {
+      "id": "wf01-webhook",
+      "name": "Manual Upload Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        260,
+        280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "koprindo-manual-upload",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryData": true
+        }
+      },
+      "webhookId": "koprindo-manual-upload",
+      "notes": "Manual upload dari web app",
+      "notesInFlow": true
+    },
+    {
+      "id": "wf01-envelope",
+      "name": "Build Raw Batch Envelope",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const i=$input.first();\nconst b=i.json.body??i.json,f=i.binary?.data;\nif(!f?.data)throw new Error('Binary file required in field data');\nreturn[{json:{ingressSource:'web_app_manual_upload',sourcePriority:300,sourceType:b.sourceType,sourceParty:b.sourceParty,channel:b.channel??'all',periodMonth:Number(b.periodMonth),periodYear:Number(b.periodYear),fileName:f.fileName??b.fileName??'manual-upload.bin',fileExtension:(f.fileExtension||f.fileName?.split('.').pop()||'').toLowerCase(),mimeType:f.mimeType??b.mimeType??'application/octet-stream',fileSizeBytes:f.fileSize??b.fileSizeBytes??0,fileChecksum:b.fileChecksum??null,uploadedBy:b.uploadedBy??'web-app-user',receivedAt:b.receivedAt??new Date().toISOString(),binaryBase64:f.data,storageRef:b.storageRef??'webhook://manual-upload'}}]"
+      }
+    },
+    {
+      "id": "wf01-call-wf04",
+      "name": "Call WF04 Normalize Validate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-normalize-validate' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf01-respond",
+      "name": "Respond To Web App",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1080,
+        280
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Upload Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Raw Batch Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Raw Batch Envelope": {
+      "main": [
+        [
+          {
+            "node": "Call WF04 Normalize Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call WF04 Normalize Validate": {
+      "main": [
+        [
+          {
+            "node": "Respond To Web App",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "intake",
+    "manual-upload"
+  ],
+  "active": false,
+  "versionId": "0c9c2f62-0f09-44ae-a513-84c1c647f01a"
+}

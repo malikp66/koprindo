@@ -1,0 +1,161 @@
+{
+  "id": "WF02GoogleDrivePoller",
+  "name": "WF02 - Intake Google Drive Poller",
+  "nodes": [
+    {
+      "id": "wf02-schedule",
+      "name": "Schedule Drive Poller",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        280
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wf02-search",
+      "name": "Search Intake Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        480,
+        280
+      ],
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "*",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $env.GOOGLE_DRIVE_SHARED_FOLDER_ID }}",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wf02-download",
+      "name": "Download Google Drive File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        740,
+        280
+      ],
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wf02-envelope",
+      "name": "Build Drive Batch Envelope",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const i=$input.first(),f=i.binary?.data;\nif(!f?.data)throw new Error('Downloaded Google Drive file missing binary data');\nconst a=(f.fileName||'').split('.');\nreturn[{json:{ingressSource:'google_drive_poller',sourcePriority:200,sourceType:$env.DEFAULT_SOURCE_TYPE||'sell_out',sourceParty:$env.DEFAULT_SOURCE_PARTY||'ritel_modern',channel:$env.DEFAULT_CHANNEL||'all',periodMonth:Number($env.DEFAULT_PERIOD_MONTH||new Date().getMonth()+1),periodYear:Number($env.DEFAULT_PERIOD_YEAR||new Date().getFullYear()),fileName:f.fileName,fileExtension:a.length>1?a.pop().toLowerCase():'',mimeType:f.mimeType||'application/octet-stream',fileSizeBytes:f.fileSize||0,fileChecksum:null,uploadedBy:'google-drive-poller',receivedAt:new Date().toISOString(),binaryBase64:f.data,storageRef:`gdrive://${i.json.id}`,originalFileId:i.json.id}}]"
+      }
+    },
+    {
+      "id": "wf02-call-wf04",
+      "name": "Call WF04 Normalize Validate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1260,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-normalize-validate' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Drive Poller": {
+      "main": [
+        [
+          {
+            "node": "Search Intake Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Intake Folder": {
+      "main": [
+        [
+          {
+            "node": "Download Google Drive File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Google Drive File": {
+      "main": [
+        [
+          {
+            "node": "Build Drive Batch Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Drive Batch Envelope": {
+      "main": [
+        [
+          {
+            "node": "Call WF04 Normalize Validate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "intake",
+    "google-drive"
+  ],
+  "active": false,
+  "versionId": "651f5f61-fb22-46cf-94df-35f1e2b51f42"
+}

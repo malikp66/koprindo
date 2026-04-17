@@ -1,0 +1,159 @@
+{
+  "id": "WF10AISummary",
+  "name": "WF10 - AI Notification Summary Builder",
+  "nodes": [
+    {
+      "id": "wf10-webhook",
+      "name": "AI Summary Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "koprindo-ai-summary",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "koprindo-ai-summary"
+    },
+    {
+      "id": "wf10-build",
+      "name": "Build Summary Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const i=$input.first().json;\nreturn[{json:{original:i,openAiRequest:{model:$env.OPENAI_MODEL_SUMMARY||'gpt-4.1-mini',input:[{role:'system',content:[{type:'input_text',text:'Ringkas alert operasional dalam bahasa Indonesia formal. Maksimal dua kalimat. Jangan mengubah angka, severity, entity, atau threshold.'}]},{role:'user',content:[{type:'input_text',text:JSON.stringify({severity:i.severity,riskType:i.riskType,entityType:i.entityType,entityKey:i.entityKey,metricName:i.metricName,observedValue:i.observedValue,thresholdValue:i.thresholdValue,ownerRole:i.ownerRole,periodKey:i.periodKey})}]}],text:{format:{type:'json_schema',name:'koprindo_ai_summary',schema:{type:'object',additionalProperties:false,properties:{summary:{type:'string'}},required:['summary']},strict:true}}}}}]"
+      }
+    },
+    {
+      "id": "wf10-openai",
+      "name": "OpenAI Responses Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        820,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.openAiRequest }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf10-parse",
+      "name": "Parse Summary Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const o=$('Build Summary Request').first().json.original,r=$input.first().json,t=r.output_text||r.output?.[0]?.content?.[0]?.text||'{}';\nlet s=o.fallbackSummary||`Risk ${o.riskType} pada ${o.entityKey}.`;\ntry{s=JSON.parse(t).summary||s}catch(e){}\nreturn[{json:{summary:s}}]"
+      }
+    },
+    {
+      "id": "wf10-respond",
+      "name": "Respond Summary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1360,
+        280
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "AI Summary Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Summary Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Summary Request": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Responses Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Responses Summary": {
+      "main": [
+        [
+          {
+            "node": "Parse Summary Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Summary Result": {
+      "main": [
+        [
+          {
+            "node": "Respond Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "notification",
+    "ai-summary"
+  ],
+  "active": false,
+  "versionId": "f90791f4-7190-45be-a845-ff7d3f0bbdb2"
+}

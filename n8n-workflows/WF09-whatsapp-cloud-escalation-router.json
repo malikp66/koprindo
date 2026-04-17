@@ -1,0 +1,188 @@
+{
+  "id": "WF09WAEscalation",
+  "name": "WF09 - WhatsApp Cloud Escalation Router",
+  "nodes": [
+    {
+      "id": "wf09-webhook",
+      "name": "WA Escalation Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "koprindo-wa-escalation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "koprindo-wa-escalation"
+    },
+    {
+      "id": "wf09-route",
+      "name": "Route Recipient And Fallback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const i=$input.first().json;\nconst to=i.severity==='critical'?($env.OPS_WA_RECIPIENT_CRITICAL||$env.OPS_WA_RECIPIENT_HIGH):($env.OPS_WA_RECIPIENT_HIGH||$env.OPS_WA_RECIPIENT_CRITICAL);\nreturn[{json:{...i,waRecipient:to,fallbackSummary:i.fallbackSummary||`Risk ${i.riskType} pada ${i.entityKey} membutuhkan tindak lanjut.`}}]"
+      }
+    },
+    {
+      "id": "wf09-call",
+      "name": "Call WF10 AI Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-ai-summary' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf09-compose",
+      "name": "Compose WhatsApp Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const s=$('Route Recipient And Fallback').first().json,sum=$input.first().json.summary||s.fallbackSummary,l=String(s.severity||'warning').toUpperCase();\nreturn[{json:{to:s.waRecipient,messageBody:`[${l}] ${sum}\\nEntity: ${s.entityKey}\\nMetric: ${s.metricName}\\nObserved: ${s.observedValue}\\nThreshold: ${s.thresholdValue}`,original:s}}]"
+      }
+    },
+    {
+      "id": "wf09-send",
+      "name": "Send WhatsApp Cloud API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.facebook.com/' + ($env.META_WABA_API_VERSION || 'v22.0') + '/' + $env.META_WABA_PHONE_NUMBER_ID + '/messages' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.META_WABA_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { messaging_product: 'whatsapp', to: $json.to, type: 'text', text: { preview_url: false, body: $json.messageBody } } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf09-respond",
+      "name": "Respond WA Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1640,
+        280
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, recipient: $('Route Recipient And Fallback').first().json.waRecipient, summary: $('Compose WhatsApp Payload').first().json.messageBody, providerResponse: $json } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WA Escalation Webhook": {
+      "main": [
+        [
+          {
+            "node": "Route Recipient And Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Recipient And Fallback": {
+      "main": [
+        [
+          {
+            "node": "Call WF10 AI Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call WF10 AI Summary": {
+      "main": [
+        [
+          {
+            "node": "Compose WhatsApp Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose WhatsApp Payload": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Cloud API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp Cloud API": {
+      "main": [
+        [
+          {
+            "node": "Respond WA Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "notification",
+    "whatsapp"
+  ],
+  "active": false,
+  "versionId": "40bcaf47-e564-4572-a3ec-b2b39b509f95"
+}

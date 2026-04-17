@@ -1,0 +1,223 @@
+{
+  "id": "WF08PaymentAging",
+  "name": "WF08 - Payment Aging Monitor",
+  "nodes": [
+    {
+      "id": "wf08-schedule",
+      "name": "Schedule Payment Aging",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        280
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 1 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wf08-query",
+      "name": "Query Aging Candidates",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        500,
+        280
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT payment_id,invoice_id,due_date,invoice_amount,paid_amount,payment_status,CURRENT_DATE-due_date AS overdue_days,to_char(CURRENT_DATE,'YYYY-MM') AS period_key FROM payment_record WHERE payment_status IN ('unpaid','partial','overdue') AND due_date<CURRENT_DATE;"
+      }
+    },
+    {
+      "id": "wf08-build",
+      "name": "Build Payment Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const ev=[];\nfor(const it of $input.all()){const d=Number(it.json.overdue_days||0);if(d<=0)continue;let s='warning',t=1;if(d>30){s='critical';t=30}else if(d>7){s='high';t=7}ev.push({paymentId:it.json.payment_id,periodKey:it.json.period_key,riskType:d>45?'payment_aging_critical':'payment_overdue',severity:s,entityType:'invoice',entityKey:it.json.invoice_id,metricName:'overdue_days',observedValue:d,thresholdValue:t,status:'open',ownerRole:'finance'})}\nreturn ev.map(json=>({json}))"
+      }
+    },
+    {
+      "id": "wf08-update",
+      "name": "Update Overdue Status",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        160
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE payment_record SET payment_status='overdue',aging_bucket=CASE WHEN CURRENT_DATE-due_date<=30 THEN '0_30' WHEN CURRENT_DATE-due_date<=45 THEN '31_45' WHEN CURRENT_DATE-due_date<=60 THEN '46_60' ELSE '61_plus' END,aging_days=CURRENT_DATE-invoice_date WHERE payment_id='{{ $json.paymentId }}';"
+      }
+    },
+    {
+      "id": "wf08-post",
+      "name": "POST Payment Risk Event",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        360
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOPRINDO_WEBAPP_BASE_URL + '/api/intake/risk-event' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.KOPRINDO_WEBAPP_API_KEY || \"\" }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { periodKey: $json.periodKey, riskType: $json.riskType, severity: $json.severity, entityType: $json.entityType, entityKey: $json.entityKey, metricName: $json.metricName, observedValue: $json.observedValue, thresholdValue: $json.thresholdValue, status: $json.status, ownerRole: $json.ownerRole } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf08-if",
+      "name": "Escalate High Critical",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1320,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "wf08-if1",
+              "leftValue": "={{ ['high', 'critical'].includes($json.severity) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wf08-notify",
+      "name": "Call WF09 Escalation Router",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-wa-escalation' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { ...$json, sourceWorkflow: 'WF08', fallbackSummary: `Invoice ${$json.entityKey} telah melewati due date selama ${$json.observedValue} hari.` } }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Payment Aging": {
+      "main": [
+        [
+          {
+            "node": "Query Aging Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Aging Candidates": {
+      "main": [
+        [
+          {
+            "node": "Build Payment Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Payment Events": {
+      "main": [
+        [
+          {
+            "node": "Update Overdue Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "POST Payment Risk Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalate High Critical",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalate High Critical": {
+      "main": [
+        [
+          {
+            "node": "Call WF09 Escalation Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "risk",
+    "payment"
+  ],
+  "active": false,
+  "versionId": "1bb4f538-5817-42cc-8d20-bd5be06b2e2e"
+}

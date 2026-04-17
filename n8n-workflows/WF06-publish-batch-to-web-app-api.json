@@ -1,0 +1,200 @@
+{
+  "id": "WF06PublishBatch",
+  "name": "WF06 - Publish Batch To Web App API",
+  "nodes": [
+    {
+      "id": "wf06-webhook",
+      "name": "Publish Batch Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "koprindo-publish-batch",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "koprindo-publish-batch"
+    },
+    {
+      "id": "wf06-ok",
+      "name": "Publishable Quality Status?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        500,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "wf06-condition",
+              "leftValue": "={{ ['passed', 'provisional'].includes($json.qualityStatus) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wf06-post",
+      "name": "POST Intake Batch API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOPRINDO_WEBAPP_BASE_URL + '/api/intake/batch' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.KOPRINDO_WEBAPP_API_KEY || \"\" }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf06-blocked",
+      "name": "Build Blocked Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        360
+      ],
+      "parameters": {
+        "jsCode": "return[{json:{success:false,publishAttempted:false,message:'Batch blocked by deterministic quality gate.',batchId:$json.batchId,qualityStatus:$json.qualityStatus,blockingIssueCount:$json.blockingIssueCount,qualityScore:$json.qualityScore,qualityNotes:$json.qualityNotes||[]}}]"
+      }
+    },
+    {
+      "id": "wf06-r1",
+      "name": "Respond Publish Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1060,
+        200
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "wf06-r2",
+      "name": "Respond Blocked Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1060,
+        360
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Publish Batch Webhook": {
+      "main": [
+        [
+          {
+            "node": "Publishable Quality Status?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publishable Quality Status?": {
+      "main": [
+        [
+          {
+            "node": "POST Intake Batch API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Blocked Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Intake Batch API": {
+      "main": [
+        [
+          {
+            "node": "Respond Publish Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Blocked Result": {
+      "main": [
+        [
+          {
+            "node": "Respond Blocked Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "intake",
+    "publish"
+  ],
+  "active": false,
+  "versionId": "922e1fea-ad58-4c90-a087-dc3f04c2621a"
+}

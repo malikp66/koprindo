@@ -1,0 +1,202 @@
+{
+  "id": "WF07ReconciliationRisk",
+  "name": "WF07 - Reconciliation Risk Evaluation",
+  "nodes": [
+    {
+      "id": "wf07-schedule",
+      "name": "Schedule Reconciliation",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        280
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "wf07-query",
+      "name": "Query Reconciliation Metrics",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        520,
+        280
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT si.period_key,COALESCE(si.channel,so.channel) AS channel,COALESCE(si.branch_code,so.branch_code) AS branch_code,COALESCE(si.sku_code,so.sku_code) AS sku_code,SUM(COALESCE(si.qty_sell_in,0))::numeric AS total_in,SUM(COALESCE(so.qty_sell_out,0))::numeric AS total_out FROM sell_in_record si FULL OUTER JOIN sell_out_record so ON si.period_key=so.period_key AND si.channel=so.channel AND si.branch_code=so.branch_code AND si.sku_code=so.sku_code GROUP BY 1,2,3,4;"
+      }
+    },
+    {
+      "id": "wf07-build",
+      "name": "Build Reconciliation Risks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        820,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const ev=[];\nfor(const it of $input.all()){const ti=Number(it.json.total_in||0),to=Number(it.json.total_out||0);if(ti<=0)continue;const v=(ti-to)/ti;let s=null,t=null;if(v>.5){s='critical';t=.5}else if(v>.3){s='high';t=.3}else if(v>.15){s='warning';t=.15}if(!s)continue;ev.push({periodKey:it.json.period_key,riskType:'sell_in_sell_out_mismatch',severity:s,entityType:'branch',entityKey:`${it.json.channel||'all'}:${it.json.branch_code||'UNKNOWN'}:${it.json.sku_code||'UNKNOWN'}`,metricName:'variance_sell_in_sell_out_pct',observedValue:Number(v.toFixed(4)),thresholdValue:t,status:'open',ownerRole:s==='warning'?'bd':'management'})}\nreturn ev.map(json=>({json}))"
+      }
+    },
+    {
+      "id": "wf07-post",
+      "name": "POST Risk Events API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOPRINDO_WEBAPP_BASE_URL + '/api/intake/risk-event' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.KOPRINDO_WEBAPP_API_KEY || \"\" }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf07-if",
+      "name": "High Or Critical Only",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1100,
+        380
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "wf07-if1",
+              "leftValue": "={{ ['high', 'critical'].includes($json.severity) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wf07-notify",
+      "name": "Call WF09 Escalation Router",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1380,
+        380
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-wa-escalation' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { ...$json, sourceWorkflow: 'WF07', fallbackSummary: `Risk ${$json.riskType} pada ${$json.entityKey} melewati ambang ${$json.thresholdValue}.` } }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Reconciliation": {
+      "main": [
+        [
+          {
+            "node": "Query Reconciliation Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Reconciliation Metrics": {
+      "main": [
+        [
+          {
+            "node": "Build Reconciliation Risks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reconciliation Risks": {
+      "main": [
+        [
+          {
+            "node": "POST Risk Events API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "High Or Critical Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Or Critical Only": {
+      "main": [
+        [
+          {
+            "node": "Call WF09 Escalation Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "risk",
+    "reconciliation"
+  ],
+  "active": false,
+  "versionId": "5b24d567-f395-4c62-b92c-eb6410ffb26b"
+}

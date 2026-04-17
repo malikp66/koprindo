@@ -1,0 +1,159 @@
+{
+  "id": "WF05AIParser",
+  "name": "WF05 - AI Fallback Parser",
+  "nodes": [
+    {
+      "id": "wf05-webhook",
+      "name": "AI Parser Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "koprindo-ai-parser",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "koprindo-ai-parser"
+    },
+    {
+      "id": "wf05-build",
+      "name": "Build OpenAI Parser Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        520,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const e=$input.first().json;\nconst schema={type:'object',additionalProperties:false,properties:{records:{type:'array',items:{type:'object',additionalProperties:false,properties:{channel:{type:'string'},regionCode:{type:'string'},branchCode:{type:'string'},outletCode:{type:'string'},skuCode:{type:'string'},qtySellOut:{type:'number'},qtySellIn:{type:'number'},salesAmount:{type:'number'},openingStock:{type:'number'},closingStock:{type:'number'},rawRowRef:{type:'string'}},required:['channel','regionCode','branchCode','outletCode','skuCode','rawRowRef']}},notes:{type:'array',items:{type:'string'}}},required:['records']};\nreturn[{json:{envelope:e,openAiRequest:{model:$env.OPENAI_MODEL_PARSER||'gpt-4.1-mini',input:[{role:'system',content:[{type:'input_text',text:'Normalize messy intake files into deterministic JSON for Koprindo FOX. Never invent quality status or business decisions. Output only the schema.'}]},{role:'user',content:[{type:'input_text',text:JSON.stringify({sourceType:e.sourceType,sourceParty:e.sourceParty,channel:e.channel,periodMonth:e.periodMonth,periodYear:e.periodYear,fallbackReason:e.fallbackReason,sampleRows:e.sampleRows||[]})}]}],text:{format:{type:'json_schema',name:'koprindo_ai_parse_result',schema,strict:true}}}}}]"
+      }
+    },
+    {
+      "id": "wf05-openai",
+      "name": "OpenAI Responses Parser",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        820,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.OPENAI_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.openAiRequest }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf05-normalize",
+      "name": "Normalize AI Parse Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        280
+      ],
+      "parameters": {
+        "jsCode": "const e=$('Build OpenAI Parser Request').first().json.envelope,r=$input.first().json,t=r.output_text||r.output?.[0]?.content?.[0]?.text||'{}',p=JSON.parse(t),rec=Array.isArray(p.records)?p.records:[],b=rec.length===0?1:0,w=Array.isArray(p.notes)?p.notes.length:0,s=Math.max(0,88-b*10-w),q=b>0?'blocked':s<90?'provisional':'passed';\nreturn[{json:{batchId:$execution.id,sourceType:e.sourceType,sourceParty:e.sourceParty,channel:e.channel,periodMonth:e.periodMonth,periodYear:e.periodYear,fileName:e.fileName,fileChecksum:e.fileChecksum||`derived:${$execution.id}`,fileSizeBytes:e.fileSizeBytes||0,records:rec,qualityScore:s,blockingIssueCount:b,warningIssueCount:w,qualityStatus:q,validationStatus:q==='blocked'?'rejected':'validated',aiAssisted:true,parserMode:'ai_fallback',qualityNotes:p.notes||[]}}]"
+      }
+    },
+    {
+      "id": "wf05-respond",
+      "name": "Respond AI Parse Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1360,
+        280
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "AI Parser Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build OpenAI Parser Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build OpenAI Parser Request": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Responses Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Responses Parser": {
+      "main": [
+        [
+          {
+            "node": "Normalize AI Parse Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize AI Parse Result": {
+      "main": [
+        [
+          {
+            "node": "Respond AI Parse Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "intake",
+    "ai-parser"
+  ],
+  "active": false,
+  "versionId": "cb1d41b7-fc71-457c-b9fa-ff4844ea1f6b"
+}

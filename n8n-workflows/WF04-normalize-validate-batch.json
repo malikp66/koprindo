@@ -1,0 +1,299 @@
+{
+  "id": "WF04NormalizeValidate",
+  "name": "WF04 - Normalize Validate Batch",
+  "nodes": [
+    {
+      "id": "wf04-webhook",
+      "name": "Normalize Validate Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        360
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "koprindo-normalize-validate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "koprindo-normalize-validate"
+    },
+    {
+      "id": "wf04-rehydrate",
+      "name": "Rehydrate Binary Envelope",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        360
+      ],
+      "parameters": {
+        "jsCode": "const i=$input.first().json;\nconst req=['sourceType','sourceParty','periodMonth','periodYear','fileName','binaryBase64'];\nconst miss=req.filter(f=>i[f]===undefined||i[f]===null||i[f]==='');\nif(miss.length)throw new Error(`Missing raw batch envelope fields: ${miss.join(', ')}`);\nconst ext=(i.fileExtension||i.fileName.split('.').pop()||'').toLowerCase();\nreturn[{json:{...i,fileExtension:ext,parserCandidate:['csv','xlsx','xls'].includes(ext)?'spreadsheet':'ai_fallback'},binary:{data:{data:i.binaryBase64,fileName:i.fileName,mimeType:i.mimeType||'application/octet-stream'}}}]"
+      }
+    },
+    {
+      "id": "wf04-read",
+      "name": "Read Spreadsheet",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 2,
+      "position": [
+        760,
+        240
+      ],
+      "parameters": {
+        "operation": "read",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf04-normalize",
+      "name": "Normalize And Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        240
+      ],
+      "parameters": {
+        "jsCode": "const rows=$input.all();\nif(!rows.length)return[{json:{needsAiFallback:true,fallbackReason:'no_rows_from_spreadsheet'}}];\nconst keys=Object.keys(rows[0].json).map(k=>k.toLowerCase());\nconst ok=['period','channel','sku_code','qty_sell_out','qty_sell_in','invoice_id','invoice_amount','closing_stock'];\nif(!ok.some(k=>keys.includes(k)))return[{json:{needsAiFallback:true,fallbackReason:'unknown_headers',sampleRows:rows.slice(0,5).map(x=>x.json)}}];\nconst e=$('Rehydrate Binary Envelope').first().json;\nconst rec=rows.map((x,i)=>{const r=x.json;return{channel:String(r.channel||e.channel||'all').toLowerCase(),regionCode:r.region_code||r.regionCode||'UNKNOWN_REGION',branchCode:r.branch_code||r.branchCode||'UNKNOWN_BRANCH',outletCode:r.outlet_code||r.outletCode||'UNKNOWN_OUTLET',skuCode:r.sku_code||r.skuCode||r.invoice_id||`ROW_${i+1}`,qtySellOut:r.qty_sell_out??r.qtySellOut??0,qtySellIn:r.qty_sell_in??r.qtySellIn??0,salesAmount:r.sales_amount??r.salesAmount??0,openingStock:r.opening_stock??r.openingStock??0,closingStock:r.closing_stock??r.closingStock??0,rawRowRef:r.raw_row_ref||`spreadsheet_row_${i+1}`}});\nconst b=rec.filter(r=>!r.skuCode).length,w=rec.filter(r=>Number(r.qtySellOut||r.qtySellIn||0)===0).length,s=Math.max(0,100-b*10-w*2),q=b>0||s<75?'blocked':s<90?'provisional':'passed';\nreturn[{json:{batchId:$execution.id,sourceType:e.sourceType,sourceParty:e.sourceParty,channel:e.channel,periodMonth:e.periodMonth,periodYear:e.periodYear,fileName:e.fileName,fileChecksum:e.fileChecksum||`derived:${$execution.id}`,fileSizeBytes:e.fileSizeBytes||0,records:rec,qualityScore:s,blockingIssueCount:b,warningIssueCount:w,qualityStatus:q,validationStatus:q==='blocked'?'rejected':'validated',aiAssisted:false,parserMode:'deterministic',qualityNotes:w>0?['Some rows have zero quantities and should be reviewed.']:[]}}]"
+      }
+    },
+    {
+      "id": "wf04-ai-route",
+      "name": "Needs AI Fallback?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1020,
+        480
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "wf04-ai-condition",
+              "leftValue": "={{ $json.needsAiFallback || $('Rehydrate Binary Envelope').first().json.parserCandidate === 'ai_fallback' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "wf04-call-wf05",
+      "name": "Call WF05 AI Parser",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-ai-parser' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { ...$('Rehydrate Binary Envelope').first().json, fallbackReason: $json.fallbackReason || 'unsupported_extension', sampleRows: $json.sampleRows || [] } }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf04-call-wf06-d",
+      "name": "Call WF06 Publish Deterministic",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-publish-batch' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf04-call-wf06-a",
+      "name": "Call WF06 Publish AI Parsed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env.N8N_INTERNAL_WEBHOOK_BASE_URL || $env.N8N_WEBHOOK_BASE_URL) + '/webhook/koprindo-publish-batch' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "wf04-r1",
+      "name": "Respond Deterministic Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1540,
+        200
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "wf04-r2",
+      "name": "Respond AI Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1800,
+        400
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Normalize Validate Webhook": {
+      "main": [
+        [
+          {
+            "node": "Rehydrate Binary Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rehydrate Binary Envelope": {
+      "main": [
+        [
+          {
+            "node": "Read Spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Needs AI Fallback?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "Normalize And Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize And Score": {
+      "main": [
+        [
+          {
+            "node": "Call WF06 Publish Deterministic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs AI Fallback?": {
+      "main": [
+        [
+          {
+            "node": "Call WF05 AI Parser",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Call WF05 AI Parser": {
+      "main": [
+        [
+          {
+            "node": "Call WF06 Publish AI Parsed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call WF06 Publish Deterministic": {
+      "main": [
+        [
+          {
+            "node": "Respond Deterministic Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call WF06 Publish AI Parsed": {
+      "main": [
+        [
+          {
+            "node": "Respond AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-hybrid-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "intake",
+    "validation"
+  ],
+  "active": false,
+  "versionId": "fe45cc6c-59e5-4d39-8d4d-f45fa78b18d0"
+}
