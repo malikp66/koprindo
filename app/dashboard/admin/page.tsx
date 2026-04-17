@@ -7,7 +7,6 @@ import {
   CircleX,
   Clock3,
   Link2,
-  ShieldAlert,
   UserPlus,
 } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -29,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { registrationQueue, registrationStats, userDirectory } from "@/lib/mock-data";
+import { registrationQueue, userDirectory } from "@/lib/mock-data";
 
 type RegistrationRow = (typeof registrationQueue)[number];
 
@@ -167,22 +166,6 @@ export default function AdminPage() {
         </TabsList>
 
         <TabsContent value="approvals" className="space-y-6">
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {registrationStats.map((item) => (
-              <Card key={item.label}>
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">{item.label}</p>
-                      <div className="mt-3 text-2xl tracking-tight tabular text-foreground">{item.value}</div>
-                    </div>
-                    <Badge variant={toneToBadge(item.tone)}>{item.tone}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </section>
-
           <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
             <Card>
               <CardHeader>
@@ -257,7 +240,7 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
-          <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+          <section>
             <Card>
               <CardHeader>
                 <CardTitle>Direktori pengguna aktif</CardTitle>
@@ -278,26 +261,6 @@ export default function AdminPage() {
                     </Select>
                   }
                 />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Catatan peran dan akses</CardTitle>
-                <CardDescription>Tiga hal utama yang perlu dijaga agar akun yang aktif tetap sesuai kebutuhan kerja.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  { icon: ShieldAlert, title: "SLA persetujuan", note: "Usahakan permintaan akun baru diputuskan maksimal 24 jam." },
-                  { icon: CheckCircle2, title: "Pemetaan peran", note: "Pastikan hak akses sesuai tugas: admin, finance, operasional, atau PIC ritel." },
-                  { icon: Clock3, title: "Kepemilikan tugas", note: "Setiap channel perlu punya PIC yang jelas untuk upload, retur, dan laporan." },
-                ].map((item) => (
-                  <div key={item.title} className="rounded-2xl border border-border/25 bg-accent/20 p-4">
-                    <item.icon className="h-5 w-5 text-primary" />
-                    <p className="mt-3 text-sm font-medium text-foreground">{item.title}</p>
-                    <p className="mt-1.5 text-sm text-muted-foreground">{item.note}</p>
-                  </div>
-                ))}
               </CardContent>
             </Card>
           </section>

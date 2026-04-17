@@ -6,10 +6,6 @@ import {
   Download,
   Radar,
   RefreshCcw,
-  ShieldAlert,
-  TrendingDown,
-  TrendingUp,
-  WalletCards,
 } from "lucide-react";
 import { useDemoConsole } from "@/components/dashboard/demo-console-provider";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -35,29 +31,6 @@ const summaryCards = [
   { label: "Piutang >45 hari", value: demoScenario.aging45Plus, note: "7 invoice perlu follow-up" },
   { label: "Cabang butuh perhatian", value: "3 cabang", note: "Jawa Barat dan Jawa Timur paling tertekan" },
   { label: "Pencapaian target", value: demoScenario.targetProgress, note: "Masih perlu dorongan tambahan" },
-];
-
-const priorityCards = [
-  {
-    title: "Cirebon Raya turun paling tajam",
-    detail: "Penjualan turun 28.9% dan outlet aktif ikut menyusut. Ini perlu intervensi minggu ini.",
-    icon: TrendingDown,
-  },
-  {
-    title: "Alfamart masih jadi penopang utama",
-    detail: "Momentum modern trade masih sehat dan bisa dipakai untuk mendorong target nasional.",
-    icon: TrendingUp,
-  },
-  {
-    title: "Tiga invoice mendekati batas aman",
-    detail: "Follow-up finance perlu diprioritaskan sebelum masuk bucket yang lebih berat.",
-    icon: WalletCards,
-  },
-  {
-    title: "Satu channel masih perlu dirapikan",
-    detail: "Data yang belum bersih harus dibereskan agar angka ringkasan tetap aman dibaca.",
-    icon: ShieldAlert,
-  },
 ];
 
 function branchStatusTone(tone: BranchRow["tone"]) {
@@ -157,62 +130,9 @@ export default function MonitoringPage() {
         </TabsList>
 
         <TabsContent value="ringkasan" className="space-y-6">
-          <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
             <SelloutChartPanel />
-            <Card>
-              <CardHeader>
-                <CardTitle>Prioritas tindak lanjut</CardTitle>
-                <CardDescription>Baca empat hal ini dulu sebelum turun ke detail lain.</CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-3">
-                {priorityCards.map((item) => (
-                  <div key={item.title} className="rounded-2xl border border-border/25 bg-accent/20 p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <item.icon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{item.title}</p>
-                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.detail}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </section>
-
-          <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
             <AnomalyFeedCard />
-            <Card>
-              <CardHeader>
-                <CardTitle>Cabang yang paling perlu diperhatikan</CardTitle>
-                <CardDescription>Ringkasan singkat agar keputusan operasional lebih cepat diambil.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="rounded-2xl border border-border/25 bg-accent/20 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cabang terpilih</p>
-                      <h3 className="mt-2 text-xl tracking-tight text-foreground">{selectedBranch.branch}</h3>
-                    </div>
-                    <Badge variant={branchStatusTone(selectedBranch.tone)}>{branchStatusLabel(selectedBranch.tone)}</Badge>
-                  </div>
-                </div>
-                {[
-                  ["Wilayah", selectedBranch.region],
-                  ["Penjualan", `${selectedBranch.sellout} unit`],
-                  ["Growth", selectedBranch.growth],
-                  ["Outlet aktif", selectedBranch.activeOutlet],
-                  ["Arah aksi", selectedBranch.tone === "danger" ? "Cek outlet prioritas, audit distribusi, dan rapatkan stok minggu ini." : "Pertahankan distribusi dan jaga outlet aktif tetap konsisten."],
-                ].map(([label, value]) => (
-                  <div key={label} className="kv-row">
-                    <span className="text-sm text-muted-foreground">{label}</span>
-                    <span className="max-w-[56%] text-right text-sm font-medium text-foreground">{value}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
           </section>
         </TabsContent>
 

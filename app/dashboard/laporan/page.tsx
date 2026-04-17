@@ -16,12 +16,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { activityLog, demoScenario, generatedReports, reportCatalog, reportPreviewSections, reportSummary } from "@/lib/mock-data";
 
-const sendChecklist = [
-  "Pastikan angka utama sudah sesuai periode aktif.",
-  "Periksa kembali cabang prioritas dan isu pembayaran yang wajib dibawa ke manajemen.",
-  "Jangan kirim keluar jika masih ada data penting yang belum bersih.",
-];
-
 export default function ReportsPage() {
   const [selectedReport, setSelectedReport] = React.useState(reportCatalog[0]);
   const [detailOpen, setDetailOpen] = React.useState(false);
@@ -119,10 +113,9 @@ export default function ReportsPage() {
               <CardContent className="space-y-3">
                 {[
                   ["Laporan", selectedReport.title],
+                  ["Status", selectedReport.status],
                   ["Target vs realisasi", `${demoScenario.totalSellOutCompact} vs target periode aktif`],
-                  ["Cabang terbaik", "Jabodetabek Barat"],
                   ["Cabang prioritas", "Cirebon Raya"],
-                  ["Status PKS", "Peringatan awal"],
                   ["Kondisi data", "2 channel siap dipakai, 1 masih perlu revisi"],
                 ].map(([label, value]) => (
                   <div key={label} className="kv-row">
@@ -130,14 +123,6 @@ export default function ReportsPage() {
                     <span className="max-w-[56%] text-right text-sm font-medium text-foreground">{value}</span>
                   </div>
                 ))}
-                <div className="rounded-2xl border border-border/25 bg-accent/20 p-4">
-                  <div className="text-sm font-medium text-foreground">Yang perlu dicek sebelum kirim</div>
-                  <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                    {sendChecklist.map((item) => (
-                      <p key={item}>{item}</p>
-                    ))}
-                  </div>
-                </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Button variant="outline" className="gap-2" onClick={() => toast.success("File laporan sedang diunduh")}><Download data-icon="inline-start" />Unduh</Button>
                   <Button variant="secondary" className="gap-2" onClick={() => toast.success("Laporan dikirim")}><Mail data-icon="inline-start" />Kirim</Button>
@@ -179,23 +164,7 @@ export default function ReportsPage() {
         </TabsContent>
 
         <TabsContent value="history" className="space-y-6">
-          <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-            <Card>
-              <CardHeader>
-                <CardTitle>Jadwal dan pengingat hari ini</CardTitle>
-                <CardDescription>Ringkasan singkat hal yang perlu kamu cek sebelum menutup siklus pelaporan.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  "Rekap bulanan internal siap dikirim ke manajemen.",
-                  "Evaluasi PKS masih perlu review manual sebelum dikirim ke pihak luar.",
-                  "Satu laporan PO masih menunggu penyegaran data cabang.",
-                ].map((item) => (
-                  <div key={item} className="rounded-2xl border border-border/25 bg-accent/20 p-4 text-sm text-muted-foreground">{item}</div>
-                ))}
-              </CardContent>
-            </Card>
-
+          <section>
             <Card>
               <CardHeader>
                 <CardTitle>Riwayat pengiriman</CardTitle>

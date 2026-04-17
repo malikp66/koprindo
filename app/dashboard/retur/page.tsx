@@ -4,10 +4,8 @@ import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis } from "recharts";
 import {
-  AlertTriangle,
   PackageOpen,
   RefreshCcw,
-  ShieldAlert,
   ShieldCheck,
   Warehouse,
   Waves,
@@ -164,7 +162,7 @@ export default function ReturPage() {
         })}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+      <section>
         <Card className="surface-noise">
           <CardHeader>
             <CardTitle>Tren dan alasan retur</CardTitle>
@@ -269,54 +267,6 @@ export default function ReturPage() {
             </Tabs>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Kasus yang perlu ditindak</CardTitle>
-            <CardDescription>Pilih kasus yang paling mendesak untuk melihat ringkasan dampak dan langkah tindak lanjutnya.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {returnLedger.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSelectedReturn(item)}
-                className={`w-full rounded-2xl border p-4 text-left transition-colors ${
-                  selectedReturn.id === item.id ? "border-primary/30 bg-primary/5" : "border-border/25 bg-accent/20 hover:bg-accent/30"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-medium text-foreground">{item.branch}</div>
-                    <div className="mt-1 text-sm text-muted-foreground">{item.outlet} • {item.reason}</div>
-                  </div>
-                  <Badge variant={returnStatusTone(item.status)}>{item.status}</Badge>
-                </div>
-                <div className="mt-3 text-sm text-muted-foreground">Qty {item.qty} unit • Dampak {item.impact}</div>
-              </button>
-            ))}
-
-            <div className="rounded-2xl border border-border/25 bg-accent/20 p-4">
-              <div className="text-sm font-medium text-foreground">Ringkasan kasus terpilih</div>
-              <div className="mt-3 space-y-3">
-                {[
-                  ["ID retur", selectedReturn.id],
-                  ["Cabang", selectedReturn.branch],
-                  ["Outlet", selectedReturn.outlet],
-                  ["Qty", `${selectedReturn.qty} unit`],
-                  ["Status", selectedReturn.status],
-                  ["Langkah berikutnya", selectedReturn.status === "Menunggu" ? "Segera cek kondisi outlet dan pastikan retur diproses hari ini." : selectedReturn.status === "Ditinjau" ? "Pantau progres tim yang sedang memeriksa kasus ini." : "Pastikan koreksi penjualan sudah tercatat penuh."],
-                ].map(([label, value]) => (
-                  <div key={label} className="kv-row">
-                    <span className="text-sm text-muted-foreground">{label}</span>
-                    <span className="max-w-[56%] text-right text-sm font-medium text-foreground">{value}</span>
-                  </div>
-                ))}
-              </div>
-              <Button className="mt-4 w-full" onClick={() => setDetailOpen(true)}>Lihat detail kasus</Button>
-            </div>
-          </CardContent>
-        </Card>
       </section>
 
       <section className="space-y-4">
@@ -359,24 +309,6 @@ export default function ReturPage() {
             />
           </CardContent>
         </Card>
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-3">
-        {[
-          { icon: AlertTriangle, title: "Masalah outlet berulang", note: "11 outlet perlu dipantau lebih ketat karena kasus retur muncul berulang." },
-          { icon: Warehouse, title: "Cabang paling terdampak", note: "Surabaya Timur dan Bandung Inti masih mendominasi volume retur." },
-          { icon: ShieldAlert, title: "Dampak ke penjualan", note: "Retur yang belum selesai akan menahan koreksi penjualan periode aktif." },
-        ].map((item) => (
-          <Card key={item.title}>
-            <CardContent className="p-5">
-              <div className="flex size-9 items-center justify-center rounded-full border border-sky-200/70 bg-sky-50 text-slate-900">
-                <item.icon className="h-4.5 w-4.5" />
-              </div>
-              <h3 className="mt-3 text-base font-medium tracking-tight text-foreground">{item.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{item.note}</p>
-            </CardContent>
-          </Card>
-        ))}
       </section>
 
       <DetailSheet

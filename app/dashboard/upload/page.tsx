@@ -3,12 +3,8 @@
 import * as React from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  AlertCircle,
-  CheckCircle2,
-  Clock3,
   FileSpreadsheet,
   FileUp,
-  UploadCloud,
 } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { DetailSheet } from "@/components/dashboard/detail-sheet";
@@ -28,10 +24,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { batchRegistryDetailed, foxAcceptedSkus, uploadStatus } from "@/lib/mock-data";
+import { batchRegistryDetailed, foxAcceptedSkus } from "@/lib/mock-data";
 
 type UploadRow = (typeof batchRegistryDetailed)[number];
 
@@ -41,49 +36,6 @@ const uploadSummary = [
   { label: "Perlu revisi", value: "1 file", note: "Masih ada isi yang tidak sesuai template" },
   { label: "Belum upload", value: "1 channel", note: "AksesMu belum kirim periode aktif" },
 ];
-
-const intakePriorityItems = [
-  {
-    title: "Indomaret perlu kirim ulang file",
-    detail: "Masih ada 14 baris yang tidak sesuai portofolio SKU FOX inti dan perlu dirapikan sebelum dipakai.",
-    tone: "warning" as const,
-  },
-  {
-    title: "AksesMu belum unggah periode aktif",
-    detail: "Pengingat kedua perlu dikirim hari ini agar siklus laporan tidak tertunda.",
-    tone: "danger" as const,
-  },
-  {
-    title: "Finance perlu cek data pembayaran",
-    detail: "Satu batch pembayaran sudah masuk, tetapi masih perlu konfirmasi status invoice yang belum lunas.",
-    tone: "info" as const,
-  },
-];
-
-const uploadSamples = {
-  siap: {
-    fileName: "alfamart_sep_2026.csv",
-    fileSize: "2.4 MB",
-    rows: "1.284 baris",
-    checks: [
-      { label: "Format file sesuai", detail: "File terbaca sebagai CSV dan struktur kolom lengkap.", tone: "success" as const },
-      { label: "Periode sudah cocok", detail: "Periode September 2026 sesuai dengan siklus aktif.", tone: "success" as const },
-      { label: "Tidak ada duplikasi", detail: "Baris transaksi tidak ditemukan ganda.", tone: "success" as const },
-      { label: "Siap dipakai", detail: "Data bisa lanjut dipakai untuk monitoring bulan berjalan.", tone: "success" as const },
-    ],
-  },
-  revisi: {
-    fileName: "indomaret_sep_2026.xlsx",
-    fileSize: "1.8 MB",
-    rows: "1.130 baris",
-    checks: [
-      { label: "Format file sesuai", detail: "File berhasil dibaca dan kolom utama tersedia.", tone: "success" as const },
-      { label: "Periode sudah cocok", detail: "Periode September 2026 sudah sesuai.", tone: "success" as const },
-      { label: "Isi masih perlu dirapikan", detail: "14 baris masih memuat SKU di luar portofolio FOX yang dipakai sistem ini.", tone: "warning" as const },
-      { label: "Perlu kirim ulang", detail: "File belum bisa dipakai penuh sebelum revisi selesai.", tone: "warning" as const },
-    ],
-  },
-} as const;
 
 function uploadStatusLabel(status: UploadRow["status"]) {
   if (status === "terbit") return "Siap dipakai";
@@ -126,8 +78,6 @@ function uploadNextStep(row: UploadRow) {
 export default function UploadPage() {
   const [selectedUpload, setSelectedUpload] = React.useState<UploadRow>(batchRegistryDetailed[0]);
   const [detailOpen, setDetailOpen] = React.useState(false);
-  const [sampleMode, setSampleMode] = React.useState<keyof typeof uploadSamples>("siap");
-  const selectedSample = uploadSamples[sampleMode];
 
   const columns: ColumnDef<UploadRow>[] = [
     {
@@ -252,12 +202,12 @@ export default function UploadPage() {
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+      <section>
         <Card className="surface-noise">
           <CardHeader>
-            <CardTitle>Area upload dan hasil pengecekan</CardTitle>
+            <CardTitle>Area upload</CardTitle>
             <CardDescription>
-              Gunakan panel ini untuk mensimulasikan file yang siap dipakai atau file yang masih perlu revisi sebelum diproses lebih lanjut.
+              Isi channel, periode, dan PIC, lalu unggah file periode aktif. Hasil pengecekan detail bisa dibaca dari tabel riwayat di bawah.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -286,134 +236,16 @@ export default function UploadPage() {
             </div>
 
             <div className="rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-8 text-center">
-              <UploadCloud className="mx-auto h-10 w-10 text-primary" />
-              <h3 className="mt-4 text-lg font-medium tracking-tight text-foreground">
-                Drop CSV / XLSX di sini
-              </h3>
+              <h3 className="text-lg font-medium tracking-tight text-foreground">Drop CSV / XLSX di sini</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Halaman ini akan langsung memberitahu apakah file sudah aman dipakai atau masih perlu kamu perbaiki.
+                Sistem akan memeriksa format, periode, dan catatan file setelah upload selesai.
               </p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 <Button variant="outline" onClick={() => toast.info("Dialog penelusuran file dibuka")}>
                   Pilih File
                 </Button>
-                <Button
-                  variant={sampleMode === "siap" ? "default" : "secondary"}
-                  onClick={() => setSampleMode("siap")}
-                >
-                  Contoh File Siap
-                </Button>
-                <Button
-                  variant={sampleMode === "revisi" ? "default" : "secondary"}
-                  onClick={() => setSampleMode("revisi")}
-                >
-                  Contoh File Perlu Revisi
-                </Button>
+                <Button onClick={() => toast.success("File contoh berhasil diterima")}>Kirim untuk Dicek</Button>
               </div>
-            </div>
-
-            <div className="grid gap-3 md:grid-cols-3">
-              {[
-                ["Nama file", selectedSample.fileName],
-                ["Ukuran", selectedSample.fileSize],
-                ["Perkiraan isi", selectedSample.rows],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl bg-accent/20 p-4">
-                  <div className="text-xs font-medium text-muted-foreground">{label}</div>
-                  <div className="mt-2 text-sm font-medium text-foreground">{value}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              {selectedSample.checks.map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-start gap-3 rounded-2xl border border-border/25 bg-white/80 p-4"
-                >
-                  <div
-                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                      item.tone === "success"
-                        ? "bg-emerald-50 text-emerald-600"
-                        : "bg-amber-50 text-amber-600"
-                    }`}
-                  >
-                    {item.tone === "success" ? (
-                      <CheckCircle2 className="h-4 w-4" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-foreground">{item.label}</div>
-                    <div className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      {item.detail}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Prioritas hari ini</CardTitle>
-            <CardDescription>
-              Fokus ke item yang benar-benar perlu ditindak agar data bulan berjalan cepat siap dipakai.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {intakePriorityItems.map((item) => (
-              <div key={item.title} className="rounded-2xl border border-border/25 bg-accent/20 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-medium text-foreground">{item.title}</div>
-                    <div className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                      {item.detail}
-                    </div>
-                  </div>
-                  <Badge variant={toneToBadge(item.tone)}>
-                    {item.tone === "danger"
-                      ? "Urgent"
-                      : item.tone === "warning"
-                        ? "Hari ini"
-                        : "Perlu cek"}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-
-            <div className="rounded-2xl border border-border/25 bg-accent/20 p-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Clock3 className="h-4 w-4 text-primary" />
-                Yang perlu dicek sebelum file dipakai
-              </div>
-              <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                <p>Pastikan periode dan channel sudah benar.</p>
-                <p>Pastikan tidak ada produk atau outlet yang salah mapping.</p>
-                <p>Pastikan PIC tahu bagian mana yang harus diperbaiki jika file ditolak.</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {uploadStatus.map((item) => (
-                <div key={item.channel} className="rounded-2xl border border-border/25 bg-white/80 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-medium text-foreground">{item.channel}</div>
-                      <div className="mt-1 text-sm text-muted-foreground">{item.pic}</div>
-                    </div>
-                    <Badge variant={toneToBadge(item.tone)}>{item.status}</Badge>
-                  </div>
-                  <div className="mt-3">
-                    <Progress value={item.progress} />
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Progress pengecekan {item.progress}% • Upload terakhir {item.uploadedAt}
-                  </div>
-                </div>
-              ))}
             </div>
           </CardContent>
         </Card>
