@@ -126,7 +126,7 @@ export function LayoutHeader({
           type="button"
           title="AI Insight"
           onClick={() => setAiInsightOpen(true)}
-          className="group relative h-11 rounded-full border border-primary/25 bg-accent px-3.5 text-foreground shadow-soft transition-all hover:border-primary/40 hover:bg-secondary"
+          className="group relative h-11 rounded-full bg-accent px-3.5 text-foreground shadow-soft transition-all hover:bg-secondary"
         >
           <div className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/14 text-primary ring-1 ring-primary/15">
