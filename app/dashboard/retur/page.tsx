@@ -69,10 +69,10 @@ const returnReasonFills = [
 ];
 
 const returnSummaryIcons = [
-  { icon: Waves, iconClassName: "border border-sky-200/70 bg-sky-50 text-slate-900" },
-  { icon: PackageOpen, iconClassName: "border border-sky-200/70 bg-sky-50 text-slate-900" },
-  { icon: Warehouse, iconClassName: "border border-sky-200/70 bg-sky-50 text-slate-900" },
-  { icon: ShieldCheck, iconClassName: "border border-sky-200/70 bg-sky-50 text-slate-900" },
+  { icon: Waves, iconClassName: "border border-primary/20 bg-primary/14 text-primary" },
+  { icon: PackageOpen, iconClassName: "border border-sky-500/20 bg-sky-500/14 text-sky-300" },
+  { icon: Warehouse, iconClassName: "border border-primary/20 bg-primary/14 text-primary" },
+  { icon: ShieldCheck, iconClassName: "border border-amber-500/20 bg-amber-500/14 text-amber-300" },
 ] as const;
 
 function returnStatusTone(status: ReturnRow["status"]) {
@@ -162,7 +162,7 @@ export default function ReturPage() {
         })}
       </section>
 
-      <section>
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] xl:items-start">
         <Card className="surface-noise">
           <CardHeader>
             <CardTitle>Tren dan alasan retur</CardTitle>
@@ -174,29 +174,29 @@ export default function ReturPage() {
                 <TabsTrigger value="trend">Tren</TabsTrigger>
                 <TabsTrigger value="composition">Komposisi</TabsTrigger>
               </TabsList>
-              <TabsContent value="trend" className="rounded-3xl border border-border/30 bg-gradient-to-br from-white via-lime-50/50 to-sky-50/70 p-5 shadow-soft">
+              <TabsContent value="trend" className="rounded-3xl border border-border/60 bg-card p-5">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <RefreshCcw className="h-4 w-4" />
                   Perubahan qty retur per bulan
                 </div>
-                <div className="mt-4 rounded-[1.6rem] border border-white/70 bg-white/85 p-4 shadow-[0_24px_50px_-34px_rgba(15,23,42,0.28)] backdrop-blur-sm">
+                <div className="mt-4 rounded-[1.6rem] border border-border/60 bg-accent/70 p-4">
                   <ChartContainer config={chartConfig} className="min-h-[260px] w-full">
                     <BarChart data={trendData} barCategoryGap={18} margin={{ top: 12, right: 8, left: -8, bottom: 0 }}>
                       <defs>
                         <linearGradient id="retur-trend-fill" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.95} />
-                          <stop offset="50%" stopColor="#84cc16" stopOpacity={0.85} />
-                          <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.35} />
+                          <stop offset="0%" stopColor="#ffb36a" stopOpacity={0.96} />
+                          <stop offset="45%" stopColor="hsl(var(--primary))" stopOpacity={0.88} />
+                          <stop offset="100%" stopColor="#8a4b1f" stopOpacity={0.9} />
                         </linearGradient>
                         <linearGradient id="retur-trend-stroke" x1="0" y1="0" x2="1" y2="1">
-                          <stop offset="0%" stopColor="hsl(var(--primary))" />
-                          <stop offset="100%" stopColor="#14b8a6" />
+                          <stop offset="0%" stopColor="#ffb36a" />
+                          <stop offset="100%" stopColor="#d86c1f" />
                         </linearGradient>
                       </defs>
                       <CartesianGrid vertical={false} strokeDasharray="4 4" />
                       <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={10} />
                       <ChartTooltip
-                        cursor={{ fill: "rgba(191, 219, 254, 0.2)" }}
+                        cursor={{ fill: "rgba(242, 140, 56, 0.12)" }}
                         content={<ChartTooltipContent indicator="line" />}
                       />
                       <ChartLegend content={<ChartLegendContent />} />
@@ -211,9 +211,9 @@ export default function ReturPage() {
                   </ChartContainer>
                 </div>
               </TabsContent>
-              <TabsContent value="composition" className="rounded-3xl border border-border/30 bg-gradient-to-br from-white via-orange-50/50 to-sky-50/60 p-5 shadow-soft">
+              <TabsContent value="composition" className="rounded-3xl border border-border/60 bg-card p-5">
                 <div className="text-sm text-muted-foreground">Alasan retur yang paling sering muncul</div>
-                <div className="mt-4 rounded-[1.6rem] border border-white/70 bg-white/85 p-4 shadow-[0_24px_50px_-34px_rgba(15,23,42,0.28)] backdrop-blur-sm">
+                <div className="mt-4 rounded-[1.6rem] border border-border/60 bg-accent/70 p-4">
                   <ChartContainer config={chartConfig} className="min-h-[260px] w-full">
                     <PieChart>
                       <defs>
@@ -267,48 +267,48 @@ export default function ReturPage() {
             </Tabs>
           </CardContent>
         </Card>
-      </section>
 
-      <section className="space-y-4">
-        <SectionHeading
-          eyebrow="Daftar Retur"
-          title="Buku retur"
-          description="Cari retur per outlet, lihat status penyelesaiannya, dan buka detail item untuk tindak lanjut yang lebih jelas."
-        />
-        <Card>
-          <CardContent className="pt-6">
-            <DataTable
-              columns={columns}
-              data={returnLedger}
-              searchPlaceholder="Cari retur, cabang, atau outlet..."
-              onRowClick={(row) => {
-                setSelectedReturn(row);
-                setDetailOpen(true);
-              }}
-              toolbar={
-                <>
-                  <Select defaultValue="all">
-                    <SelectTrigger className="w-[160px]"><SelectValue placeholder="Channel" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Semua Channel</SelectItem>
-                      <SelectItem value="alfamart">Alfamart</SelectItem>
-                      <SelectItem value="indomaret">Indomaret</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select defaultValue="all-status">
-                    <SelectTrigger className="w-[170px]"><SelectValue placeholder="Status" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all-status">Semua Status</SelectItem>
-                      <SelectItem value="pending">Menunggu</SelectItem>
-                      <SelectItem value="review">Ditinjau</SelectItem>
-                      <SelectItem value="resolved">Selesai</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </>
-              }
-            />
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <SectionHeading
+            eyebrow="Daftar Retur"
+            title="Buku retur"
+            description="Cari retur per outlet, lihat status penyelesaiannya, dan buka detail item untuk tindak lanjut yang lebih jelas."
+          />
+          <Card>
+            <CardContent className="pt-6">
+              <DataTable
+                columns={columns}
+                data={returnLedger}
+                searchPlaceholder="Cari retur, cabang, atau outlet..."
+                onRowClick={(row) => {
+                  setSelectedReturn(row);
+                  setDetailOpen(true);
+                }}
+                toolbar={
+                  <>
+                    <Select defaultValue="all">
+                      <SelectTrigger className="w-[160px]"><SelectValue placeholder="Channel" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Semua Channel</SelectItem>
+                        <SelectItem value="alfamart">Alfamart</SelectItem>
+                        <SelectItem value="indomaret">Indomaret</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select defaultValue="all-status">
+                      <SelectTrigger className="w-[170px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all-status">Semua Status</SelectItem>
+                        <SelectItem value="pending">Menunggu</SelectItem>
+                        <SelectItem value="review">Ditinjau</SelectItem>
+                        <SelectItem value="resolved">Selesai</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </>
+                }
+              />
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       <DetailSheet

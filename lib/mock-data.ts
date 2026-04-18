@@ -161,7 +161,7 @@ export const operationalStatusSummary = [
   {
     label: "Kendali keputusan",
     value: "Pemeriksaan mutu aktif",
-    note: "Masalah penghambat tidak boleh terbit ke tampilan pimpinan",
+    note: "Masalah penghambat tidak boleh terbit ke tampilan admin",
     tone: "warning" as StatusTone,
   },
 ];
@@ -812,7 +812,7 @@ export const batchWorkflowSteps = [
   },
   {
     id: "publish",
-    title: "Terbit ke pimpinan",
+    title: "Terbit ke admin",
     status: "pending",
     note: "Angka final hanya tayang setelah batch dipublish atau diberi flag provisional.",
   },
@@ -821,7 +821,7 @@ export const batchWorkflowSteps = [
 export const reportPreviewSections = [
   {
     id: "executive",
-    title: "Ringkasan Pimpinan",
+    title: "Ringkasan Admin",
     summary: `Sell-out ${demoScenario.totalSellOutCompact}, progress target ${demoScenario.targetProgress}, dan status PKS Early Warning.`,
     bullets: [
       `Outlet aktif ${demoScenario.activeOutletCount} dengan coverage ${demoScenario.distributionCoverage}.`,

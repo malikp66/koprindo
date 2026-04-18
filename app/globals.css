@@ -4,39 +4,39 @@
 
 @layer base {
   :root {
-    /* Reference palette: #B7EB76 green, #FF8730 orange, #715DE3 purple, #73D9ED blue, #F2F7FA bg */
-    --background: 198, 50%, 96%;
-    --foreground: 220 18% 13%;
-    --card: 0 0% 100%;
-    --card-foreground: 220 18% 13%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 18% 13%;
-    --primary: 88 70% 69%;
-    --primary-foreground: 88 40% 12%;
-    --secondary: 200 35% 93%;
-    --secondary-foreground: 220 16% 18%;
-    --muted: 200 28% 93%;
-    --muted-foreground: 215 10% 44%;
-    --accent: 198 34% 92%;
-    --accent-foreground: 220 16% 18%;
-    --destructive: 0 68% 55%;
+    color-scheme: dark;
+    --background: 224 24% 8%;
+    --foreground: 35 24% 92%;
+    --card: 223 19% 12%;
+    --card-foreground: 35 22% 92%;
+    --popover: 224 18% 11%;
+    --popover-foreground: 35 22% 92%;
+    --primary: 24 92% 58%;
+    --primary-foreground: 24 35% 10%;
+    --secondary: 222 16% 18%;
+    --secondary-foreground: 35 18% 88%;
+    --muted: 222 16% 14%;
+    --muted-foreground: 220 10% 66%;
+    --accent: 223 16% 16%;
+    --accent-foreground: 35 22% 92%;
+    --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 98%;
-    --success: 152 44% 46%;
-    --success-foreground: 150 40% 98%;
-    --warning: 38 90% 52%;
-    --warning-foreground: 28 42% 16%;
-    --border: 200 20% 88%;
-    --input: 200 20% 88%;
-    --ring: 88 70% 69%;
+    --success: 154 43% 46%;
+    --success-foreground: 150 36% 10%;
+    --warning: 34 90% 58%;
+    --warning-foreground: 30 30% 12%;
+    --border: 222 15% 24%;
+    --input: 222 15% 24%;
+    --ring: 24 92% 58%;
     --radius: 1rem;
-    --sidebar: 0 0% 100%;
-    --sidebar-foreground: 220 18% 13%;
-    --sidebar-border: 200 20% 90%;
-    --chart-1: #B7EB76;
-    --chart-2: #FF8730;
-    --chart-3: #715DE3;
-    --chart-4: #73D9ED;
-    --chart-5: #dde2eb;
+    --sidebar: 224 20% 10%;
+    --sidebar-foreground: 35 18% 90%;
+    --sidebar-border: 222 15% 22%;
+    --chart-1: #f28c38;
+    --chart-2: #4da3ff;
+    --chart-3: #ffb347;
+    --chart-4: #2dd4bf;
+    --chart-5: #94a3b8;
   }
 
   * {
@@ -86,10 +86,10 @@
     inset: 0;
     pointer-events: none;
     background-image:
-      radial-gradient(rgba(70, 108, 126, 0.032) 0.6px, transparent 0.6px);
+      radial-gradient(rgba(242, 140, 56, 0.06) 0.6px, transparent 0.6px);
     background-size: 22px 22px;
-    opacity: 0.08;
-    mix-blend-mode: multiply;
+    opacity: 0.18;
+    mix-blend-mode: screen;
   }
 
   .tabular {
@@ -99,7 +99,9 @@
 
   .shell-panel {
     background:
-      radial-gradient(circle at top, hsl(198 56% 94.8%), hsl(var(--background)) 52%);
+      radial-gradient(circle at top, hsl(24 82% 18% / 0.32), transparent 28%),
+      radial-gradient(circle at 80% 0%, hsl(215 62% 18% / 0.28), transparent 24%),
+      linear-gradient(180deg, hsl(224 24% 9%), hsl(var(--background)) 44%);
   }
 
   /* Soft inner panel — reusable pattern */

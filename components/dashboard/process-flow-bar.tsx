@@ -36,7 +36,7 @@ const processStages: Array<{
   {
     id: "reports",
     label: "Laporan",
-    note: "Laporan pimpinan dan jejak audit diselesaikan",
+    note: "Laporan admin dan jejak audit diselesaikan",
     href: "/dashboard/laporan",
     icon: ClipboardList,
   },

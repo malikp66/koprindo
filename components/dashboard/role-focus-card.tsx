@@ -8,7 +8,7 @@ import { useDemoConsole } from "@/components/dashboard/demo-console-provider";
 const roleContextMap = {
   dashboard: {
     executive: {
-      title: "Sudut pandang pimpinan",
+      title: "Sudut pandang admin",
       note: "Fokus pada headline metric, posture risiko, dan keputusan lintas channel.",
       access: ["Ringkasan nasional", "Status target", "Risiko utama"],
     },
@@ -25,7 +25,7 @@ const roleContextMap = {
     consultant: {
       title: "Sudut pandang konsultan",
       note: "Fokus pada transparansi data, evaluasi performa, dan narasi strategis.",
-      access: ["Ringkasan pimpinan", "Status PKS", "Visibilitas lintas pihak"],
+      access: ["Ringkasan admin", "Status PKS", "Visibilitas lintas pihak"],
     },
     principal: {
       title: "Sudut pandang prinsipal",
@@ -104,9 +104,9 @@ const roleContextMap = {
   },
   reports: {
     executive: {
-      title: "Pelaporan pimpinan",
+      title: "Pelaporan admin",
       note: "Menutup siklus dengan laporan yang sudah lolos quality gate dan siap dipakai mengambil keputusan.",
-      access: ["Paket laporan pimpinan", "Catatan keputusan", "Daftar periksa tata kelola"],
+      access: ["Paket laporan admin", "Catatan keputusan", "Daftar periksa tata kelola"],
     },
     operations: {
       title: "Pelaporan operasional",

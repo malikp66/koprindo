@@ -26,7 +26,7 @@ export function ChannelLogo({ channel, className, imageClassName }: ChannelLogoP
 
   return (
     <div
-      className={className ?? "flex h-10 w-10 items-center justify-center rounded-2xl border border-border/40 bg-white p-2 shadow-soft"}
+      className={className ?? "flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-card p-2 shadow-soft"}
     >
       <img
         src={logo.src}

@@ -68,7 +68,7 @@ export function DataTable<TData>({
         </div>
         {toolbar ? <div className="flex flex-wrap gap-2 lg:justify-end">{toolbar}</div> : null}
       </div>
-      <div className="overflow-hidden rounded-2xl border border-border/30 bg-white shadow-soft">
+      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-soft">
         <div className="overflow-x-auto">
         <Table>
           <TableHeader>

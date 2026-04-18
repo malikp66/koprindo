@@ -11,6 +11,15 @@ export type ProvinceMetric = {
   returns: string;
 };
 
+export type ProvinceCityRank = {
+  city: string;
+  branch: string;
+  sellOut: string;
+  growth: string;
+  activeOutlets: string;
+  note: string;
+};
+
 type IndonesiaMapProps = {
   activeProvince?: ProvinceMetric;
   onProvinceSelect?: (province: ProvinceMetric) => void;
@@ -26,6 +35,33 @@ function hashCode(value: string) {
   return Array.from(value).reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0, 7);
 }
 
+const provinceCityMap: Record<string, string[]> = {
+  "DKI Jakarta": ["Jakarta Pusat", "Jakarta Barat", "Jakarta Timur", "Jakarta Selatan", "Jakarta Utara", "Kepulauan Seribu"],
+  Jakarta: ["Jakarta Pusat", "Jakarta Barat", "Jakarta Timur", "Jakarta Selatan", "Jakarta Utara", "Kepulauan Seribu"],
+  "Jawa Barat": ["Bandung", "Bekasi", "Bogor", "Cirebon", "Tasikmalaya", "Sukabumi", "Karawang", "Cimahi"],
+  "Jawa Tengah": ["Semarang", "Solo", "Tegal", "Purwokerto", "Magelang", "Pekalongan", "Kudus", "Salatiga"],
+  "Jawa Timur": ["Surabaya", "Malang", "Kediri", "Jember", "Madiun", "Sidoarjo", "Probolinggo", "Mojokerto"],
+  Banten: ["Tangerang", "Serang", "Cilegon", "Pandeglang", "Lebak", "Tangerang Selatan"],
+  Yogyakarta: ["Yogyakarta", "Sleman", "Bantul", "Kulon Progo", "Gunungkidul", "Wates"],
+  Bali: ["Denpasar", "Badung", "Gianyar", "Tabanan", "Singaraja", "Karangasem"],
+  "Sumatera Utara": ["Medan", "Pematangsiantar", "Binjai", "Tebing Tinggi", "Kisaran", "Rantauprapat"],
+  "Sumatera Selatan": ["Palembang", "Lubuklinggau", "Prabumulih", "Baturaja", "Lahat", "Pagar Alam"],
+  "Sulawesi Selatan": ["Makassar", "Parepare", "Palopo", "Bone", "Bulukumba", "Maros"],
+  Kalimantan: ["Balikpapan", "Samarinda", "Banjarmasin", "Pontianak", "Palangkaraya", "Tarakan"],
+};
+
+function getProvinceCities(name: string) {
+  const normalized = normalizeProvinceName(name);
+  return provinceCityMap[normalized] ?? [
+    `${normalized} Kota 1`,
+    `${normalized} Kota 2`,
+    `${normalized} Kota 3`,
+    `${normalized} Kota 4`,
+    `${normalized} Kota 5`,
+    `${normalized} Kota 6`,
+  ];
+}
+
 export function normalizeProvinceName(raw: string) {
   if (raw.includes("Jakarta")) return "Jakarta";
   if (raw.includes("Sumatra")) return raw.replace("Sumatra", "Sumatera");
@@ -36,17 +72,42 @@ export function buildProvinceMetric(name: string): ProvinceMetric {
   const hash = hashCode(name);
   const units = 120 + (hash % 860);
   const growthRaw = ((hash % 220) - 40) / 10;
-  const coverage = (70 + (hash % 220) / 10).toFixed(1);
-  const returns = (0.12 + (hash % 85) / 100).toFixed(2);
+  const coverage = 240 + (hash % 780);
+  const returns = 18 + (hash % 145);
 
   return {
     key: name,
     label: name,
     revenue: `${units}K unit`,
     growth: `${growthRaw >= 0 ? "+" : ""}${growthRaw.toFixed(1)}%`,
-    coverage: `${coverage}%`,
-    returns: `${returns}%`,
+    coverage: `${coverage.toLocaleString("id-ID")} outlet`,
+    returns: `${returns.toLocaleString("id-ID")} outlet`,
   };
+}
+
+export function buildProvinceCityRanking(name: string, productName: string) {
+  const cities = getProvinceCities(name);
+
+  return cities
+    .map((city, index) => {
+      const itemHash = hashCode(`${name}-${productName}-${city}`);
+      const unitBase = Math.max(115, 760 - index * 74 + (itemHash % 48));
+      const growthRaw = ((itemHash % 180) - 35) / 10;
+      const activeOutlets = Math.max(26, 118 - index * 9 + (itemHash % 6));
+      const branchSuffixes = ["Inti", "Utara", "Selatan", "Timur", "Barat", "Pusat"];
+
+      return {
+        city,
+        branch: `${city} ${branchSuffixes[index % branchSuffixes.length]}`,
+        sellOutValue: unitBase,
+        sellOut: `${unitBase.toLocaleString("id-ID")}K unit`,
+        growth: `${growthRaw >= 0 ? "+" : ""}${growthRaw.toFixed(1)}%`,
+        activeOutlets: `${activeOutlets.toLocaleString("id-ID")} outlet`,
+        note: `${productName} paling kuat di area ${city}`,
+      };
+    })
+    .sort((left, right) => right.sellOutValue - left.sellOutValue)
+    .map(({ sellOutValue: _sellOutValue, ...item }) => item satisfies ProvinceCityRank);
 }
 
 const DEFAULT_PROVINCE_NAME = "Jawa Barat";
@@ -173,24 +234,24 @@ export function IndonesiaMap({ activeProvince, onProvinceSelect }: IndonesiaMapP
 
   const hoveredStyle = hoveredProvinceKey ? `
     .indonesia-map-svg path[data-province="${hoveredProvinceKey.replace(/"/g, '\\"')}"] {
-      fill: #dfe8c2;
-      stroke: #8ea24b;
+      fill: #3f3530;
+      stroke: #f28c38;
       stroke-width: 1.4;
     }
   ` : "";
 
   const selectedStyle = selectedProvinceKey ? `
     .indonesia-map-svg path[data-province="${selectedProvinceKey.replace(/"/g, '\\"')}"] {
-      fill: #b8ea5c !important;
-      stroke: #5f7a20 !important;
+      fill: #f28c38 !important;
+      stroke: #ffb26f !important;
       stroke-width: 1.8 !important;
     }
   ` : "";
 
   const mapStyles = `
     .indonesia-map-svg path[data-province] {
-      fill: #e4eaf2;
-      stroke: #cdd5e0;
+      fill: #263142;
+      stroke: #3c475b;
       stroke-width: 1;
       cursor: pointer;
       outline: none;
@@ -204,7 +265,7 @@ export function IndonesiaMap({ activeProvince, onProvinceSelect }: IndonesiaMapP
   return (
     <div
       ref={containerRef}
-      className="relative min-h-[360px] overflow-hidden rounded-[1.8rem] bg-[#edf1f7] ring-1 ring-white/80"
+      className="relative min-h-[360px] overflow-hidden rounded-[1.8rem] bg-[hsl(223_18%_14%)] ring-1 ring-white/5"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
@@ -216,13 +277,13 @@ export function IndonesiaMap({ activeProvince, onProvinceSelect }: IndonesiaMapP
       />
       {tooltip ? (
         <div
-          className="pointer-events-none absolute z-10 w-[190px] -translate-x-1/2 -translate-y-full rounded-[1.1rem] border border-[#d6dec4] bg-white px-4 py-3 shadow-[0_20px_45px_rgba(61,75,35,0.18)] transition-all duration-100 ease-out"
+          className="pointer-events-none absolute z-10 w-[190px] -translate-x-1/2 -translate-y-full rounded-[1.1rem] border border-border/70 bg-popover px-4 py-3 shadow-[0_20px_45px_rgba(0,0,0,0.45)] transition-all duration-100 ease-out"
           style={{
             left: tooltip.x,
             top: tooltip.y,
           }}
         >
-          <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-[#71815c]">
+          <div className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-primary/80">
             Provinsi Aktif
           </div>
           <div className="mt-1 text-sm font-semibold text-foreground">{tooltip.province.label}</div>

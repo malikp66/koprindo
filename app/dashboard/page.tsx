@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  ChevronDown,
   Crown,
   Flame,
   MoreHorizontal,
@@ -12,12 +11,21 @@ import {
   Zap,
 } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/metric-card";
-import { CustomerOrdersChart } from "@/components/dashboard/customer-orders-chart";
-import { buildProvinceMetric, IndonesiaMap } from "@/components/dashboard/indonesia-map";
+import {
+  buildProvinceCityRanking,
+  buildProvinceMetric,
+  IndonesiaMap,
+} from "@/components/dashboard/indonesia-map";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { SelloutChartPanel } from "@/components/dashboard/chart-panel";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { demoScenario } from "@/lib/mock-data";
 
 // Metric cards — data berbasis PRD Koprindo FOX 2026
@@ -55,27 +63,31 @@ const cards = [
 // SKU prioritas FOX untuk ritel modern nasional
 const topProducts = [
   {
+    value: "FOX Premium",
     title: "FOX Premium",
     subtitle: "Core SKU entry / volume driver",
     price: "840 - 1.020",
     icon: Flame,
-    iconColor: "bg-[#FF8730]/15 text-[#FF8730]",
+    iconColor: "bg-primary/14 text-primary",
   },
   {
+    value: "FOX Borobudur",
     title: "FOX Borobudur",
     subtitle: "Disposable lighter untuk rotasi cepat",
     price: "840",
     icon: PackageCheck,
-    iconColor: "bg-[#715DE3]/12 text-[#715DE3]",
+    iconColor: "bg-primary/14 text-primary",
   },
   {
+    value: "FOX Rocket",
     title: "FOX Rocket",
     subtitle: "Entry line dengan step-up ringan",
     price: "1.350",
     icon: Zap,
-    iconColor: "bg-sky-100 text-sky-700",
+    iconColor: "bg-sky-500/14 text-sky-300",
   },
   {
+    value: "FOX Zenith 905 Slim",
     title: "FOX Zenith 905 Slim",
     subtitle: "Test trade-up SKU modern retail",
     price: "2.400 - 3.000",
@@ -83,17 +95,32 @@ const topProducts = [
     iconColor: "bg-primary/15 text-foreground",
   },
   {
+    value: "FOX Zenith Alpha",
     title: "FOX Zenith Alpha",
     subtitle: "Selective premium accessible",
     price: "3.000",
     icon: Crown,
-    iconColor: "bg-amber-100 text-amber-700",
+    iconColor: "bg-amber-500/14 text-amber-300",
   },
 ];
+
+const ALL_PRODUCTS_VALUE = "all-products";
 
 export default function DashboardPage() {
   const defaultProvince = React.useMemo(() => buildProvinceMetric("Jawa Barat"), []);
   const [activeProvince, setActiveProvince] = React.useState(defaultProvince);
+  const [selectedProduct, setSelectedProduct] = React.useState(ALL_PRODUCTS_VALUE);
+  const activeProduct = React.useMemo(
+    () => topProducts.find((product) => product.value === selectedProduct) ?? null,
+    [selectedProduct],
+  );
+  const activeProductLabel = activeProduct?.title ?? "Semua Produk";
+  const rankingLabel =
+    activeProductLabel === "Semua Produk" ? "semua produk" : activeProductLabel;
+  const topCityRanking = React.useMemo(
+    () => buildProvinceCityRanking(activeProvince.label, activeProductLabel),
+    [activeProductLabel, activeProvince.label],
+  );
 
   return (
     <div className="space-y-6">
@@ -121,7 +148,7 @@ export default function DashboardPage() {
             </div>
             <button
               type="button"
-              className="rounded-2xl border border-border/30 bg-white p-2 text-muted-foreground shadow-soft transition-colors hover:bg-accent/50"
+              className="rounded-2xl border border-border/70 bg-card p-2 text-muted-foreground shadow-soft transition-colors hover:bg-accent/70"
             >
               <MoreHorizontal className="h-5 w-5" />
             </button>
@@ -130,7 +157,11 @@ export default function DashboardPage() {
             {topProducts.map((item) => (
               <div
                 key={item.title}
-                className="flex min-h-[64px] flex-1 items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-accent/30"
+                className={`flex min-h-[64px] flex-1 items-center gap-4 rounded-xl border px-3 py-2.5 transition-colors ${
+                  activeProduct?.value === item.value
+                    ? "border-primary/20 bg-primary/10"
+                    : "border-transparent hover:bg-accent/70"
+                }`}
               >
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${item.iconColor}`}
@@ -152,55 +183,30 @@ export default function DashboardPage() {
         </Card>
       </section>
 
-      {/* Row 3 — Customer Orders + Sales by Regions */}
-      <section className="grid gap-4 xl:grid-cols-[0.78fr_1.82fr]">
-        {/* Customer Orders */}
+      {/* Row 3 — Sales by Regions */}
+      <section>
         <Card>
-          <CardHeader className="flex flex-row items-start justify-between pb-4">
-            <div>
-              <CardTitle className="text-xl tracking-tight">Pesanan Pelanggan</CardTitle>
-              <CardDescription>1 Jan – 31 Des 2026</CardDescription>
-            </div>
-            <button
-              type="button"
-              className="rounded-2xl border border-border/30 bg-white p-2 text-muted-foreground shadow-soft transition-colors hover:bg-accent/50"
-            >
-              <MoreHorizontal className="h-5 w-5" />
-            </button>
-          </CardHeader>
-          <CardContent className="flex flex-1 flex-col gap-4">
-            <div className="text-3xl leading-none tracking-tight tabular text-foreground">45.637</div>
-            <div className="flex items-center gap-3">
-              <Badge
-                variant="info"
-                className="rounded-lg bg-primary px-3 py-1 text-xs font-medium text-primary-foreground"
-              >
-                +9.4%
-              </Badge>
-              <span className="text-sm text-muted-foreground">+245 outlet baru</span>
-            </div>
-            <CustomerOrdersChart />
-          </CardContent>
-        </Card>
-
-        {/* Sales by Regions */}
-        <Card>
-          <CardHeader className="flex flex-row items-start justify-between pb-4">
+          <CardHeader className="flex flex-col gap-4 pb-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <CardTitle className="text-xl tracking-tight">Penjualan per Provinsi</CardTitle>
               <CardDescription>Pantau penjualan pada tiap provinsi distribusi</CardDescription>
             </div>
-            <div className="flex gap-2">
-              <div className="inline-flex items-center gap-2 rounded-2xl border border-border/30 bg-white px-3 py-2 text-sm text-foreground/80 shadow-soft transition-colors hover:bg-accent/50">
-                Semua Produk <ChevronDown className="h-3.5 w-3.5" />
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-2xl border border-border/30 bg-white px-3 py-2 text-sm text-foreground/80 shadow-soft transition-colors hover:bg-accent/50">
-                Provinsi Teratas <ChevronDown className="h-3.5 w-3.5" />
-              </div>
-            </div>
+            <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+              <SelectTrigger className="h-12 w-full rounded-2xl border-border/70 bg-card px-4 text-base shadow-soft sm:w-[220px]">
+                <SelectValue placeholder="Pilih produk FOX" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_PRODUCTS_VALUE}>Semua Produk</SelectItem>
+                {topProducts.map((product) => (
+                  <SelectItem key={product.value} value={product.value}>
+                    {product.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardHeader>
-          <CardContent className="grid gap-6 lg:grid-cols-[0.32fr_0.68fr]">
-            <div className="space-y-4">
+          <CardContent className="grid gap-6 xl:grid-cols-[minmax(220px,0.58fr)_minmax(0,1.3fr)_minmax(300px,0.76fr)] xl:gap-7">
+            <div className="space-y-4 xl:max-w-[280px]">
               <div>
                 <div className="text-xs font-medium text-muted-foreground">
                   Provinsi dengan kinerja terbaik
@@ -219,19 +225,19 @@ export default function DashboardPage() {
                 </div>
                 <div className="mt-1 text-sm text-muted-foreground">{activeProvince.label} vs bulan sebelumnya</div>
               </div>
-              <div className="rounded-2xl border border-border/25 bg-accent/20 px-4 py-3">
+              <div className="rounded-2xl border border-border/60 bg-accent/70 px-4 py-3">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50">
-                    <UsersRound className="h-3.5 w-3.5 text-emerald-600" />
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/14">
+                    <UsersRound className="h-3.5 w-3.5 text-sky-300" />
                   </span>
                   Cakupan outlet
                 </div>
                 <div className="mt-3 text-xl tabular font-semibold text-foreground">{activeProvince.coverage}</div>
               </div>
-              <div className="rounded-2xl border border-border/25 bg-accent/20 px-4 py-3">
+              <div className="rounded-2xl border border-border/60 bg-accent/70 px-4 py-3">
                 <div className="flex items-center gap-2 text-sm font-medium">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50">
-                    <ReceiptText className="h-3.5 w-3.5 text-amber-600" />
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/14">
+                    <ReceiptText className="h-3.5 w-3.5 text-primary" />
                   </span>
                   Dampak retur
                 </div>
@@ -239,6 +245,55 @@ export default function DashboardPage() {
               </div>
             </div>
             <IndonesiaMap activeProvince={activeProvince} onProvinceSelect={setActiveProvince} />
+            <div className="flex min-h-0 flex-col xl:max-h-[468px] xl:self-start">
+              <div className="border-b border-border/20 pb-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Kota dan cabang teratas
+                </div>
+                <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
+                  {activeProvince.label}
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Ranking {rankingLabel} dari penjualan tertinggi ke terendah.
+                </p>
+              </div>
+              <div className="mt-4 flex-1 overflow-y-auto pr-2 xl:max-h-[372px]">
+                <div className="space-y-3">
+                  {topCityRanking.map((item, index) => (
+                    <div
+                      key={`${item.city}-${item.branch}`}
+                      className="border-b border-border/15 pb-3 last:border-b-0 last:pb-0"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary/14 px-2 text-xs font-semibold text-primary">
+                              #{index + 1}
+                            </span>
+                            <div className="truncate text-sm font-semibold text-foreground">{item.city}</div>
+                          </div>
+                          <div className="mt-2 text-sm text-muted-foreground">{item.branch}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold tabular text-foreground">{item.sellOut}</div>
+                          <div className="mt-1 text-xs text-emerald-300">{item.growth}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <div>
+                          Outlet aktif
+                          <div className="mt-1 text-sm font-medium text-foreground">{item.activeOutlets}</div>
+                        </div>
+                        <div>
+                          Catatan
+                          <div className="mt-1 text-sm font-medium text-foreground">{item.note}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </section>

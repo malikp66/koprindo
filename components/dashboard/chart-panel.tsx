@@ -10,9 +10,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from "sonner";
 
 const chartConfig = {
-  alfamart: { label: "Alfamart", color: "#B7EB76" },
-  aksesmu: { label: "AksesMu", color: "#FF8730" },
-  indomaret: { label: "Indomaret", color: "#715DE3" },
+  alfamart: { label: "Alfamart", color: "#F28C38" },
+  aksesmu: { label: "AksesMu", color: "#4DA3FF" },
+  indomaret: { label: "Indomaret", color: "#FFB347" },
 } satisfies ChartConfig;
 
 const revenueSeries = [
@@ -34,17 +34,17 @@ const channelContext = {
   alfamart: {
     label: "Alfamart",
     detail: "206 outlet aktif",
-    color: "#B7EB76",
+    color: "#F28C38",
   },
   aksesmu: {
     label: "AksesMu",
     detail: "400 pembayaran tervalidasi",
-    color: "#FF8730",
+    color: "#4DA3FF",
   },
   indomaret: {
     label: "Indomaret",
     detail: "312 outlet aktif",
-    color: "#715DE3",
+    color: "#FFB347",
   },
 } as const;
 
@@ -64,15 +64,15 @@ export function SelloutChartPanel() {
           <CardTitle className="text-xl tracking-tight text-foreground">Ringkasan Penjualan dan Pendapatan</CardTitle>
           <div className="mt-4 flex items-center gap-3">
             <div className="text-[2rem] leading-none tabular tracking-tight text-foreground">Rp98,643.24</div>
-            <div className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">+8.4%</div>
+              <div className="rounded-full bg-primary/14 px-3 py-1 text-xs font-medium text-primary">+8.4%</div>
           </div>
           <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-slate-200" />
+              <span className="h-2.5 w-2.5 rounded-full bg-primary" />
               Total Penjualan
             </span>
             <span className="inline-flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#FF8730]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#4DA3FF]" />
               Total Pendapatan
             </span>
           </div>
@@ -82,7 +82,7 @@ export function SelloutChartPanel() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="absolute right-6 top-6 lg:static rounded-2xl border border-border/30 bg-white p-2.5 text-muted-foreground shadow-soft transition-colors hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                className="absolute right-6 top-6 lg:static rounded-2xl border border-border/70 bg-card p-2.5 text-muted-foreground shadow-soft transition-colors hover:bg-accent/70 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <MoreHorizontal className="h-5 w-5" />
               </button>
@@ -104,21 +104,21 @@ export function SelloutChartPanel() {
           </DropdownMenu>
           <div className="grid w-full grid-cols-1 gap-4 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-3 lg:justify-items-end">
             <div className="flex min-w-0 items-center gap-3">
-              <ChannelLogo channel="alfamart" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/30 bg-white p-2 shadow-soft" />
+              <ChannelLogo channel="alfamart" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-card p-2 shadow-soft" />
               <div className="min-w-0">
                 <div className="font-medium text-foreground leading-none">Alfamart</div>
                 <div className="mt-1 text-xs">206 outlet aktif</div>
               </div>
             </div>
             <div className="flex min-w-0 items-center gap-3">
-              <ChannelLogo channel="aksesmu" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/30 bg-white p-2 shadow-soft" />
+              <ChannelLogo channel="aksesmu" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-card p-2 shadow-soft" />
               <div className="min-w-0">
                 <div className="font-medium text-foreground leading-none">AksesMu</div>
                 <div className="mt-1 text-xs">400 pembayaran</div>
               </div>
             </div>
             <div className="flex min-w-0 items-center gap-3">
-              <ChannelLogo channel="indomaret" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/30 bg-white p-2 shadow-soft" />
+              <ChannelLogo channel="indomaret" className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/70 bg-card p-2 shadow-soft" />
               <div className="min-w-0">
                 <div className="font-medium text-foreground leading-none">Indomaret</div>
                 <div className="mt-1 text-xs">312 outlet aktif</div>
@@ -135,7 +135,7 @@ export function SelloutChartPanel() {
             barGap={2}
             className="focus:outline-none [&_path]:outline-none [&_rect]:outline-none"
           >
-            <CartesianGrid vertical={false} stroke="hsl(160 10% 92%)" strokeDasharray="3 3" />
+            <CartesianGrid vertical={false} stroke="hsl(222 15% 22%)" strokeDasharray="3 3" />
             <YAxis
               domain={[0, 45000]}
               tickCount={6}
@@ -143,17 +143,17 @@ export function SelloutChartPanel() {
               axisLine={false}
               tickMargin={10}
               tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`}
-              style={{ fontSize: "12px", fill: "hsl(220 6% 50%)" }}
+              style={{ fontSize: "12px", fill: "hsl(220 10% 66%)" }}
             />
             <XAxis
               dataKey="month"
               tickLine={false}
               axisLine={false}
               tickMargin={12}
-              style={{ fontSize: "12px", fill: "hsl(220 6% 50%)" }}
+              style={{ fontSize: "12px", fill: "hsl(220 10% 66%)" }}
             />
             <ChartTooltip
-              cursor={{ fill: "hsla(198, 50%, 88%, 0.38)", radius: 12 }}
+              cursor={{ fill: "hsla(24, 92%, 58%, 0.14)", radius: 12 }}
               content={
                 <ChartTooltipContent
                   className="min-w-[16rem]"
@@ -184,7 +184,7 @@ export function SelloutChartPanel() {
                     const channel = channelContext[name as keyof typeof channelContext];
 
                     return (
-                      <div className="flex w-full items-center justify-between gap-4 rounded-lg bg-accent/35 px-2.5 py-2">
+                      <div className="flex w-full items-center justify-between gap-4 rounded-lg bg-accent/70 px-2.5 py-2">
                         <div className="flex min-w-0 items-center gap-2.5">
                           <span
                             className="size-2.5 shrink-0 rounded-full"

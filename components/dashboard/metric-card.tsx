@@ -35,12 +35,13 @@ function MetricIcon({ label, tone }: { label: string; tone: StatusTone }) {
 }
 
 function iconBgColor(tone: StatusTone, label: string): string {
-  if (label.toLowerCase().includes("pendapatan")) return "border border-sky-200/70 bg-sky-50 text-slate-900";
-  if (label.toLowerCase().includes("outlet") || label.toLowerCase().includes("aktif")) return "border border-sky-200/70 bg-sky-50 text-slate-900";
+  if (label.toLowerCase().includes("pendapatan")) return "border border-primary/20 bg-primary/14 text-primary";
+  if (label.toLowerCase().includes("outlet") || label.toLowerCase().includes("aktif")) return "border border-sky-500/20 bg-sky-500/14 text-sky-300";
+  if (label.toLowerCase().includes("retur")) return "border border-amber-500/20 bg-amber-500/14 text-amber-300";
   if (tone === "danger") return "border border-rose-200/80 bg-rose-50 text-rose-500";
-  if (tone === "warning") return "border border-amber-200/80 bg-amber-50 text-amber-600";
-  if (tone === "info") return "border border-sky-200/70 bg-sky-50 text-slate-900";
-  return "border border-border/40 bg-white text-muted-foreground";
+  if (tone === "warning") return "border border-amber-500/20 bg-amber-500/14 text-amber-300";
+  if (tone === "info") return "border border-primary/20 bg-primary/14 text-primary";
+  return "border border-border/60 bg-accent/80 text-muted-foreground";
 }
 
 function metricSignal(label: string, value: string, delta: string) {
@@ -118,6 +119,7 @@ export function MetricCard({
 }) {
   const [detailOpen, setDetailOpen] = React.useState(false);
   const negative = delta.trim().startsWith("-");
+  const isReturnMetric = label.toLowerCase().includes("retur");
   const signal = metricSignal(label, value, delta);
 
   return (
@@ -135,10 +137,10 @@ export function MetricCard({
           <CardTitle className="text-[2rem] tabular leading-none tracking-tight text-foreground">{value}</CardTitle>
           <div className="mt-4 flex items-center justify-between gap-4">
             <div className="inline-flex items-center gap-1.5 text-sm">
-              <span className={negative ? "text-rose-500" : "text-emerald-500"}>
+              <span className={negative ? (isReturnMetric ? "text-amber-300" : "text-rose-400") : "text-emerald-400"}>
                 <MetricDelta delta={delta} />
               </span>
-              <span className={negative ? "font-medium text-rose-500" : "font-medium text-emerald-500"}>{delta}</span>
+              <span className={negative ? (isReturnMetric ? "font-medium text-amber-300" : "font-medium text-rose-400") : "font-medium text-emerald-400"}>{delta}</span>
             </div>
             <button
               type="button"

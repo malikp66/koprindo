@@ -3,7 +3,7 @@
 import * as React from "react";
 
 export const demoRoleOptions = [
-  { value: "executive", label: "Pimpinan" },
+  { value: "executive", label: "Admin" },
   { value: "operations", label: "Operasional" },
   { value: "finance", label: "Keuangan" },
   { value: "consultant", label: "Konsultan" },

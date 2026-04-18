@@ -10,8 +10,8 @@ const buttonVariants = cva(
       variant: {
         default: "rounded-full bg-primary text-primary-foreground shadow-soft hover:brightness-[1.04]",
         secondary: "rounded-full bg-secondary text-secondary-foreground hover:bg-accent",
-        outline: "rounded-full border border-border/50 bg-white text-foreground shadow-soft hover:bg-accent/40",
-        ghost: "rounded-full text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+        outline: "rounded-full border border-border/70 bg-card text-foreground shadow-soft hover:bg-accent/70",
+        ghost: "rounded-full text-muted-foreground hover:bg-accent/70 hover:text-foreground",
         destructive: "rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
       },
       size: {

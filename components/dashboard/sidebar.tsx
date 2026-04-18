@@ -18,7 +18,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "border-r border-border/30 bg-white/90 p-4 backdrop-blur-xl",
+        "border-r border-border/70 bg-sidebar/92 p-4 backdrop-blur-xl",
         mobile
           ? "flex h-full w-[min(84vw,320px)] flex-col"
           : "sticky top-0 hidden h-screen shrink-0 transition-[width] duration-300 lg:flex flex-col",
@@ -27,7 +27,7 @@ export function Sidebar({
     >
       <div className={cn("flex items-center gap-3 px-2 pt-1", collapsed && !mobile ? "justify-center" : "justify-between")}>
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-foreground text-white">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
             <Layers2 className="h-4 w-4" />
           </div>
           {(!collapsed || mobile) && (
@@ -107,9 +107,9 @@ export function Sidebar({
       </nav>
 
       {(!collapsed || mobile) && (
-        <div className="mt-auto rounded-2xl border border-border/30 bg-accent/20 p-4">
+        <div className="mt-auto rounded-2xl border border-border/70 bg-accent/60 p-4">
           <div className="flex items-center gap-2 text-sm font-medium">
-            <CircleDot className="h-4 w-4 text-amber-500" />
+            <CircleDot className="h-4 w-4 text-primary" />
             Perlu tindak lanjut hari ini
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
