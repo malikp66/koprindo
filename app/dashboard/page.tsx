@@ -46,7 +46,7 @@ const cards = [
   },
   {
     label: "Total Pendapatan",
-    value: "Rp33,4M",
+    value: demoScenario.totalRevenue,
     delta: "+8.4%",
     tone: "success" as const,
     trend: [28, 30, 31, 30, 32, 33],
@@ -92,7 +92,7 @@ const topProducts = [
     subtitle: "Test trade-up SKU modern retail",
     price: "2.400 - 3.000",
     icon: ReceiptText,
-    iconColor: "bg-primary/15 text-foreground",
+    iconColor: "text-primary",
   },
   {
     value: "FOX Zenith Alpha",

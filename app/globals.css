@@ -98,10 +98,11 @@
   }
 
   .shell-panel {
-    background:
-      radial-gradient(circle at top, hsl(24 82% 18% / 0.32), transparent 28%),
-      radial-gradient(circle at 80% 0%, hsl(215 62% 18% / 0.28), transparent 24%),
-      linear-gradient(180deg, hsl(224 24% 9%), hsl(var(--background)) 44%);
+    background: transparent;
+    backdrop-filter: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   /* Soft inner panel — reusable pattern */

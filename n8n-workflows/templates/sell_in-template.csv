@@ -1,0 +1,3 @@
+channel,region_code,branch_code,outlet_code,sku_code,qty_sell_in,shipment_date,receipt_date,raw_row_ref
+alfamart,JABAR,BDG01,ALF-001,FOX-PREMIUM,1200,2026-04-03,2026-04-04,row_1
+indomaret,JATENG,SMG01,IDM-8451,FOX-ZENITH,680,2026-04-05,2026-04-06,row_2

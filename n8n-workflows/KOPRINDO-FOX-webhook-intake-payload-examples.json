@@ -1,0 +1,146 @@
+{
+  "webhookPaths": {
+    "template": "/webhook/koprindo-fox-e2e-intake",
+    "production": "/webhook/koprindo-fox-e2e-intake-prod",
+    "staging": "/webhook/koprindo-fox-e2e-intake-staging"
+  },
+  "notes": [
+    "Payload berikut dipakai untuk mode JSON inlineRecords. Untuk upload file CSV/XLSX, kirim metadata yang sama lewat multipart/form-data dan lampirkan file pada field binary n8n.",
+    "sourceType yang didukung: sell_in, sell_out, inventory, payment.",
+    "Batch akan otomatis di-score, dicek duplikat, lalu ditulis ke Postgres jika lolos quality gate."
+  ],
+  "examples": {
+    "sell_out": {
+      "sourceType": "sell_out",
+      "sourceParty": "koprindo",
+      "channel": "alfamart",
+      "periodMonth": 4,
+      "periodYear": 2026,
+      "fileName": "sellout-alfamart-2026-04.json",
+      "fileChecksum": "fox-sellout-alfamart-2026-04-v1",
+      "uploadedBy": "ops-koprindo",
+      "records": [
+        {
+          "channel": "alfamart",
+          "regionCode": "JABAR",
+          "branchCode": "BDG01",
+          "outletCode": "ALF-001",
+          "skuCode": "FOX-PREMIUM",
+          "qtySellOut": 860,
+          "salesAmount": 722400,
+          "transactionCount": 214
+        },
+        {
+          "channel": "alfamart",
+          "regionCode": "JATIM",
+          "branchCode": "SBY01",
+          "outletCode": "ALF-923",
+          "skuCode": "FOX-ROCKET",
+          "qtySellOut": 540,
+          "salesAmount": 729000,
+          "transactionCount": 162
+        }
+      ]
+    },
+    "sell_in": {
+      "sourceType": "sell_in",
+      "sourceParty": "koprindo",
+      "channel": "indomaret",
+      "periodMonth": 4,
+      "periodYear": 2026,
+      "fileName": "sellin-indomaret-2026-04.json",
+      "fileChecksum": "fox-sellin-indomaret-2026-04-v1",
+      "uploadedBy": "supply-koprindo",
+      "records": [
+        {
+          "channel": "indomaret",
+          "regionCode": "DKI",
+          "branchCode": "JKT01",
+          "outletCode": "IDM-1442",
+          "skuCode": "FOX-PREMIUM",
+          "qtySellIn": 1200,
+          "shipmentDate": "2026-04-03",
+          "receiptDate": "2026-04-04"
+        },
+        {
+          "channel": "indomaret",
+          "regionCode": "JATENG",
+          "branchCode": "SMG01",
+          "outletCode": "IDM-8451",
+          "skuCode": "FOX-ZENITH",
+          "qtySellIn": 680,
+          "shipmentDate": "2026-04-05",
+          "receiptDate": "2026-04-06"
+        }
+      ]
+    },
+    "inventory": {
+      "sourceType": "inventory",
+      "sourceParty": "koprindo",
+      "channel": "alfamart",
+      "periodMonth": 4,
+      "periodYear": 2026,
+      "fileName": "inventory-alfamart-2026-04.json",
+      "fileChecksum": "fox-inventory-alfamart-2026-04-v1",
+      "uploadedBy": "warehouse-koprindo",
+      "records": [
+        {
+          "channel": "alfamart",
+          "regionCode": "JABAR",
+          "branchCode": "BDG01",
+          "outletCode": "ALF-001",
+          "skuCode": "FOX-PREMIUM",
+          "openingStock": 340,
+          "closingStock": 90,
+          "stockSnapshotDate": "2026-04-18"
+        },
+        {
+          "channel": "alfamart",
+          "regionCode": "JATIM",
+          "branchCode": "SBY01",
+          "outletCode": "ALF-923",
+          "skuCode": "FOX-ROCKET",
+          "openingStock": 3600,
+          "closingStock": 3250,
+          "stockSnapshotDate": "2026-04-18"
+        }
+      ]
+    },
+    "payment": {
+      "sourceType": "payment",
+      "sourceParty": "koprindo",
+      "channel": "all",
+      "periodMonth": 4,
+      "periodYear": 2026,
+      "fileName": "payment-aging-2026-04.json",
+      "fileChecksum": "fox-payment-2026-04-v1",
+      "uploadedBy": "finance-koprindo",
+      "records": [
+        {
+          "invoiceId": "INV-KOP-2026-04018",
+          "invoiceType": "retail_to_koprindo",
+          "payerParty": "ritel_modern",
+          "payeeParty": "koprindo",
+          "invoiceDate": "2026-03-20",
+          "invoiceReceivedDate": "2026-03-21",
+          "dueDate": "2026-04-05",
+          "invoiceAmount": 12850000,
+          "paidAmount": 4500000,
+          "lastPaymentDate": "2026-04-02"
+        },
+        {
+          "invoiceId": "INV-KOP-2026-04019",
+          "invoiceType": "koprindo_to_gunawan",
+          "payerParty": "koprindo",
+          "payeeParty": "gunawan_elektro",
+          "invoiceDate": "2026-03-28",
+          "invoiceReceivedDate": "2026-03-29",
+          "dueDate": "2026-04-12",
+          "invoiceAmount": 7400000,
+          "paidAmount": 0,
+          "lastPaymentDate": null
+        }
+      ]
+    }
+  }
+}

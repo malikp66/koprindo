@@ -1,0 +1,3 @@
+channel,region_code,branch_code,outlet_code,sku_code,opening_stock,closing_stock,stock_snapshot_date
+alfamart,JABAR,BDG01,ALF-001,FOX-PREMIUM,340,90,2026-04-18
+alfamart,JATIM,SBY01,ALF-923,FOX-ROCKET,3600,3250,2026-04-18

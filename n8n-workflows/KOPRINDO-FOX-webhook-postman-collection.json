@@ -1,0 +1,343 @@
+{
+  "info": {
+    "name": "KOPRINDO FOX Webhook Intake",
+    "_postman_id": "4b7bd02f-0ea0-4d16-b75e-f4c72d0e3dc9",
+    "description": "Collection untuk test webhook intake KOPRINDO FOX pada environment single, staging, dan production.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5678"
+    },
+    {
+      "key": "webhookSingle",
+      "value": "/webhook/koprindo-fox-e2e-intake"
+    },
+    {
+      "key": "webhookStaging",
+      "value": "/webhook/koprindo-fox-e2e-intake-staging"
+    },
+    {
+      "key": "webhookProduction",
+      "value": "/webhook/koprindo-fox-e2e-intake-prod"
+    }
+  ],
+  "item": [
+    {
+      "name": "Single",
+      "item": [
+        {
+          "name": "Sell Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"sell_out\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"alfamart\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"sellout-alfamart-2026-04.json\",\n  \"fileChecksum\": \"fox-sellout-alfamart-2026-04-v1\",\n  \"uploadedBy\": \"ops-koprindo\",\n  \"records\": [\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JABAR\",\n      \"branchCode\": \"BDG01\",\n      \"outletCode\": \"ALF-001\",\n      \"skuCode\": \"FOX-PREMIUM\",\n      \"qtySellOut\": 860,\n      \"salesAmount\": 722400,\n      \"transactionCount\": 214\n    },\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JATIM\",\n      \"branchCode\": \"SBY01\",\n      \"outletCode\": \"ALF-923\",\n      \"skuCode\": \"FOX-ROCKET\",\n      \"qtySellOut\": 540,\n      \"salesAmount\": 729000,\n      \"transactionCount\": 162\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookSingle}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookSingle}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Sell In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"sell_in\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"indomaret\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"sellin-indomaret-2026-04.json\",\n  \"fileChecksum\": \"fox-sellin-indomaret-2026-04-v1\",\n  \"uploadedBy\": \"supply-koprindo\",\n  \"records\": [\n    {\n      \"channel\": \"indomaret\",\n      \"regionCode\": \"DKI\",\n      \"branchCode\": \"JKT01\",\n      \"outletCode\": \"IDM-1442\",\n      \"skuCode\": \"FOX-PREMIUM\",\n      \"qtySellIn\": 1200,\n      \"shipmentDate\": \"2026-04-03\",\n      \"receiptDate\": \"2026-04-04\"\n    },\n    {\n      \"channel\": \"indomaret\",\n      \"regionCode\": \"JATENG\",\n      \"branchCode\": \"SMG01\",\n      \"outletCode\": \"IDM-8451\",\n      \"skuCode\": \"FOX-ZENITH\",\n      \"qtySellIn\": 680,\n      \"shipmentDate\": \"2026-04-05\",\n      \"receiptDate\": \"2026-04-06\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookSingle}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookSingle}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inventory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"inventory\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"alfamart\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"inventory-alfamart-2026-04.json\",\n  \"fileChecksum\": \"fox-inventory-alfamart-2026-04-v1\",\n  \"uploadedBy\": \"warehouse-koprindo\",\n  \"records\": [\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JABAR\",\n      \"branchCode\": \"BDG01\",\n      \"outletCode\": \"ALF-001\",\n      \"skuCode\": \"FOX-PREMIUM\",\n      \"openingStock\": 340,\n      \"closingStock\": 90,\n      \"stockSnapshotDate\": \"2026-04-18\"\n    },\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JATIM\",\n      \"branchCode\": \"SBY01\",\n      \"outletCode\": \"ALF-923\",\n      \"skuCode\": \"FOX-ROCKET\",\n      \"openingStock\": 3600,\n      \"closingStock\": 3250,\n      \"stockSnapshotDate\": \"2026-04-18\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookSingle}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookSingle}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"payment\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"all\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"payment-aging-2026-04.json\",\n  \"fileChecksum\": \"fox-payment-2026-04-v1\",\n  \"uploadedBy\": \"finance-koprindo\",\n  \"records\": [\n    {\n      \"invoiceId\": \"INV-KOP-2026-04018\",\n      \"invoiceType\": \"retail_to_koprindo\",\n      \"payerParty\": \"ritel_modern\",\n      \"payeeParty\": \"koprindo\",\n      \"invoiceDate\": \"2026-03-20\",\n      \"invoiceReceivedDate\": \"2026-03-21\",\n      \"dueDate\": \"2026-04-05\",\n      \"invoiceAmount\": 12850000,\n      \"paidAmount\": 4500000,\n      \"lastPaymentDate\": \"2026-04-02\"\n    },\n    {\n      \"invoiceId\": \"INV-KOP-2026-04019\",\n      \"invoiceType\": \"koprindo_to_gunawan\",\n      \"payerParty\": \"koprindo\",\n      \"payeeParty\": \"gunawan_elektro\",\n      \"invoiceDate\": \"2026-03-28\",\n      \"invoiceReceivedDate\": \"2026-03-29\",\n      \"dueDate\": \"2026-04-12\",\n      \"invoiceAmount\": 7400000,\n      \"paidAmount\": 0,\n      \"lastPaymentDate\": null\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookSingle}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookSingle}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Staging",
+      "item": [
+        {
+          "name": "Sell Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"sell_out\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"alfamart\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"sellout-alfamart-2026-04.json\",\n  \"fileChecksum\": \"fox-sellout-alfamart-2026-04-v1\",\n  \"uploadedBy\": \"ops-koprindo\",\n  \"records\": [\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JABAR\",\n      \"branchCode\": \"BDG01\",\n      \"outletCode\": \"ALF-001\",\n      \"skuCode\": \"FOX-PREMIUM\",\n      \"qtySellOut\": 860,\n      \"salesAmount\": 722400,\n      \"transactionCount\": 214\n    },\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JATIM\",\n      \"branchCode\": \"SBY01\",\n      \"outletCode\": \"ALF-923\",\n      \"skuCode\": \"FOX-ROCKET\",\n      \"qtySellOut\": 540,\n      \"salesAmount\": 729000,\n      \"transactionCount\": 162\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookStaging}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookStaging}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Sell In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"sell_in\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"indomaret\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"sellin-indomaret-2026-04.json\",\n  \"fileChecksum\": \"fox-sellin-indomaret-2026-04-v1\",\n  \"uploadedBy\": \"supply-koprindo\",\n  \"records\": [\n    {\n      \"channel\": \"indomaret\",\n      \"regionCode\": \"DKI\",\n      \"branchCode\": \"JKT01\",\n      \"outletCode\": \"IDM-1442\",\n      \"skuCode\": \"FOX-PREMIUM\",\n      \"qtySellIn\": 1200,\n      \"shipmentDate\": \"2026-04-03\",\n      \"receiptDate\": \"2026-04-04\"\n    },\n    {\n      \"channel\": \"indomaret\",\n      \"regionCode\": \"JATENG\",\n      \"branchCode\": \"SMG01\",\n      \"outletCode\": \"IDM-8451\",\n      \"skuCode\": \"FOX-ZENITH\",\n      \"qtySellIn\": 680,\n      \"shipmentDate\": \"2026-04-05\",\n      \"receiptDate\": \"2026-04-06\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookStaging}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookStaging}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inventory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"inventory\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"alfamart\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"inventory-alfamart-2026-04.json\",\n  \"fileChecksum\": \"fox-inventory-alfamart-2026-04-v1\",\n  \"uploadedBy\": \"warehouse-koprindo\",\n  \"records\": [\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JABAR\",\n      \"branchCode\": \"BDG01\",\n      \"outletCode\": \"ALF-001\",\n      \"skuCode\": \"FOX-PREMIUM\",\n      \"openingStock\": 340,\n      \"closingStock\": 90,\n      \"stockSnapshotDate\": \"2026-04-18\"\n    },\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JATIM\",\n      \"branchCode\": \"SBY01\",\n      \"outletCode\": \"ALF-923\",\n      \"skuCode\": \"FOX-ROCKET\",\n      \"openingStock\": 3600,\n      \"closingStock\": 3250,\n      \"stockSnapshotDate\": \"2026-04-18\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookStaging}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookStaging}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"payment\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"all\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"payment-aging-2026-04.json\",\n  \"fileChecksum\": \"fox-payment-2026-04-v1\",\n  \"uploadedBy\": \"finance-koprindo\",\n  \"records\": [\n    {\n      \"invoiceId\": \"INV-KOP-2026-04018\",\n      \"invoiceType\": \"retail_to_koprindo\",\n      \"payerParty\": \"ritel_modern\",\n      \"payeeParty\": \"koprindo\",\n      \"invoiceDate\": \"2026-03-20\",\n      \"invoiceReceivedDate\": \"2026-03-21\",\n      \"dueDate\": \"2026-04-05\",\n      \"invoiceAmount\": 12850000,\n      \"paidAmount\": 4500000,\n      \"lastPaymentDate\": \"2026-04-02\"\n    },\n    {\n      \"invoiceId\": \"INV-KOP-2026-04019\",\n      \"invoiceType\": \"koprindo_to_gunawan\",\n      \"payerParty\": \"koprindo\",\n      \"payeeParty\": \"gunawan_elektro\",\n      \"invoiceDate\": \"2026-03-28\",\n      \"invoiceReceivedDate\": \"2026-03-29\",\n      \"dueDate\": \"2026-04-12\",\n      \"invoiceAmount\": 7400000,\n      \"paidAmount\": 0,\n      \"lastPaymentDate\": null\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookStaging}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookStaging}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Production",
+      "item": [
+        {
+          "name": "Sell Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"sell_out\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"alfamart\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"sellout-alfamart-2026-04.json\",\n  \"fileChecksum\": \"fox-sellout-alfamart-2026-04-v1\",\n  \"uploadedBy\": \"ops-koprindo\",\n  \"records\": [\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JABAR\",\n      \"branchCode\": \"BDG01\",\n      \"outletCode\": \"ALF-001\",\n      \"skuCode\": \"FOX-PREMIUM\",\n      \"qtySellOut\": 860,\n      \"salesAmount\": 722400,\n      \"transactionCount\": 214\n    },\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JATIM\",\n      \"branchCode\": \"SBY01\",\n      \"outletCode\": \"ALF-923\",\n      \"skuCode\": \"FOX-ROCKET\",\n      \"qtySellOut\": 540,\n      \"salesAmount\": 729000,\n      \"transactionCount\": 162\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookProduction}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookProduction}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Sell In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"sell_in\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"indomaret\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"sellin-indomaret-2026-04.json\",\n  \"fileChecksum\": \"fox-sellin-indomaret-2026-04-v1\",\n  \"uploadedBy\": \"supply-koprindo\",\n  \"records\": [\n    {\n      \"channel\": \"indomaret\",\n      \"regionCode\": \"DKI\",\n      \"branchCode\": \"JKT01\",\n      \"outletCode\": \"IDM-1442\",\n      \"skuCode\": \"FOX-PREMIUM\",\n      \"qtySellIn\": 1200,\n      \"shipmentDate\": \"2026-04-03\",\n      \"receiptDate\": \"2026-04-04\"\n    },\n    {\n      \"channel\": \"indomaret\",\n      \"regionCode\": \"JATENG\",\n      \"branchCode\": \"SMG01\",\n      \"outletCode\": \"IDM-8451\",\n      \"skuCode\": \"FOX-ZENITH\",\n      \"qtySellIn\": 680,\n      \"shipmentDate\": \"2026-04-05\",\n      \"receiptDate\": \"2026-04-06\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookProduction}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookProduction}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Inventory",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"inventory\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"alfamart\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"inventory-alfamart-2026-04.json\",\n  \"fileChecksum\": \"fox-inventory-alfamart-2026-04-v1\",\n  \"uploadedBy\": \"warehouse-koprindo\",\n  \"records\": [\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JABAR\",\n      \"branchCode\": \"BDG01\",\n      \"outletCode\": \"ALF-001\",\n      \"skuCode\": \"FOX-PREMIUM\",\n      \"openingStock\": 340,\n      \"closingStock\": 90,\n      \"stockSnapshotDate\": \"2026-04-18\"\n    },\n    {\n      \"channel\": \"alfamart\",\n      \"regionCode\": \"JATIM\",\n      \"branchCode\": \"SBY01\",\n      \"outletCode\": \"ALF-923\",\n      \"skuCode\": \"FOX-ROCKET\",\n      \"openingStock\": 3600,\n      \"closingStock\": 3250,\n      \"stockSnapshotDate\": \"2026-04-18\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookProduction}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookProduction}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceType\": \"payment\",\n  \"sourceParty\": \"koprindo\",\n  \"channel\": \"all\",\n  \"periodMonth\": 4,\n  \"periodYear\": 2026,\n  \"fileName\": \"payment-aging-2026-04.json\",\n  \"fileChecksum\": \"fox-payment-2026-04-v1\",\n  \"uploadedBy\": \"finance-koprindo\",\n  \"records\": [\n    {\n      \"invoiceId\": \"INV-KOP-2026-04018\",\n      \"invoiceType\": \"retail_to_koprindo\",\n      \"payerParty\": \"ritel_modern\",\n      \"payeeParty\": \"koprindo\",\n      \"invoiceDate\": \"2026-03-20\",\n      \"invoiceReceivedDate\": \"2026-03-21\",\n      \"dueDate\": \"2026-04-05\",\n      \"invoiceAmount\": 12850000,\n      \"paidAmount\": 4500000,\n      \"lastPaymentDate\": \"2026-04-02\"\n    },\n    {\n      \"invoiceId\": \"INV-KOP-2026-04019\",\n      \"invoiceType\": \"koprindo_to_gunawan\",\n      \"payerParty\": \"koprindo\",\n      \"payeeParty\": \"gunawan_elektro\",\n      \"invoiceDate\": \"2026-03-28\",\n      \"invoiceReceivedDate\": \"2026-03-29\",\n      \"dueDate\": \"2026-04-12\",\n      \"invoiceAmount\": 7400000,\n      \"paidAmount\": 0,\n      \"lastPaymentDate\": null\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}{{webhookProduction}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "{{webhookProduction}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

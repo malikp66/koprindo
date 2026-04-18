@@ -126,7 +126,7 @@ export default function MonitoringPage() {
           <TabsTrigger value="cabang">Cabang</TabsTrigger>
           <TabsTrigger value="pembayaran">Pembayaran</TabsTrigger>
           <TabsTrigger value="masalah">Masalah Operasional</TabsTrigger>
-          <TabsTrigger value="pks">Evaluasi PKS</TabsTrigger>
+              <TabsTrigger value="pks">Analisa Menyeluruh</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ringkasan" className="space-y-6">
@@ -246,7 +246,7 @@ export default function MonitoringPage() {
         <TabsContent value="pks">
           <Card className="surface-noise">
             <CardHeader>
-              <CardTitle>Evaluasi PKS</CardTitle>
+                  <CardTitle>Analisa Menyeluruh</CardTitle>
               <CardDescription>Ringkasan skor dan catatan penting performa distribusi pada periode aktif.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
@@ -271,7 +271,7 @@ export default function MonitoringPage() {
                   </div>
                 ))}
               </div>
-              <Button className="gap-2" onClick={() => toast.success("Evaluasi PKS diperbarui")}>
+                  <Button className="gap-2" onClick={() => toast.success("Analisa menyeluruh diperbarui")}>
                 <Radar data-icon="inline-start" />
                 Jalankan evaluasi ulang
               </Button>

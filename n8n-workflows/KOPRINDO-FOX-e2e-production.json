@@ -1,0 +1,1063 @@
+{
+  "id": "KOPRINDOFOXE2EPROD",
+  "name": "Koprindo FOX - E2E Intake Publish Risk Orchestrator [Production]",
+  "nodes": [
+    {
+      "id": "e2e-webhook",
+      "name": "Webhook Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        220
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "koprindo-fox-e2e-intake-prod",
+        "responseMode": "onReceived",
+        "options": {
+          "binaryData": true
+        }
+      },
+      "webhookId": "koprindo-fox-e2e-intake-prod",
+      "notes": "Trigger utama untuk upload manual dari web app atau sistem lain. Bisa kirim binary file CSV/XLSX atau payload JSON dengan records.",
+      "notesInFlow": true
+    },
+    {
+      "id": "e2e-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        420
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "e2e-schedule",
+      "name": "Daily Risk Sweep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        900
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "notes": "Menyapu ulang payment aging dan mismatch sell-in vs sell-out setiap hari pukul 06:00 Asia/Jakarta.",
+      "notesInFlow": true
+    },
+    {
+      "id": "e2e-build-webhook-envelope",
+      "name": "Build Envelope From Webhook",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        220
+      ],
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst body = item.json.body ?? item.json;\nconst binaryEntry = item.binary ? Object.values(item.binary)[0] : null;\nconst normalizeSourceType = (value) => {\n  const raw = String(value || '').toLowerCase().trim();\n  const map = {\n    'sell-in': 'sell_in',\n    'sellin': 'sell_in',\n    'sell_in': 'sell_in',\n    'sell-out': 'sell_out',\n    'sellout': 'sell_out',\n    'sell_out': 'sell_out',\n    'payment': 'payment',\n    'payments': 'payment',\n    'inventory': 'inventory'\n  };\n  return map[raw] || raw;\n};\nconst sourceType = normalizeSourceType(body.sourceType || body.source_type || process.env.DEFAULT_SOURCE_TYPE || '');\nconst sourceParty = String(body.sourceParty || body.source_party || process.env.DEFAULT_SOURCE_PARTY || 'manual_admin').toLowerCase().trim();\nconst channel = String(body.channel || process.env.DEFAULT_CHANNEL || 'all').toLowerCase().trim();\nconst now = new Date();\nconst periodMonth = Number(body.periodMonth || body.period_month || process.env.DEFAULT_PERIOD_MONTH || (now.getMonth() + 1));\nconst periodYear = Number(body.periodYear || body.period_year || process.env.DEFAULT_PERIOD_YEAR || now.getFullYear());\nconst inlineRecords = Array.isArray(body.records) ? body.records : null;\nconst fileName = binaryEntry?.fileName || body.fileName || `${sourceType || 'batch'}-${periodYear}-${String(periodMonth).padStart(2, '0')}.csv`;\nconst fileExtension = String(binaryEntry?.fileExtension || fileName.split('.').pop() || 'csv').toLowerCase();\nconst fileSizeBytes = Number(binaryEntry?.fileSize || body.fileSizeBytes || (inlineRecords ? JSON.stringify(inlineRecords).length : 0));\nconst fileChecksum = String(body.fileChecksum || body.file_checksum || `${sourceType}|${sourceParty}|${channel}|${periodYear}|${periodMonth}|${fileName}|${fileSizeBytes}`);\nreturn [{\n  json: {\n    triggerMode: 'webhook',\n    sourceType,\n    sourceParty,\n    channel,\n    periodMonth,\n    periodYear,\n    fileName,\n    fileExtension,\n    mimeType: binaryEntry?.mimeType || body.mimeType || 'application/octet-stream',\n    fileSizeBytes,\n    fileChecksum,\n    uploadedBy: body.uploadedBy || body.uploaded_by || 'n8n-webhook',\n    receivedAt: body.receivedAt || body.received_at || now.toISOString(),\n    inlineRecords\n  },\n  binary: binaryEntry ? { data: binaryEntry } : undefined\n}];"
+      }
+    },
+    {
+      "id": "e2e-build-demo-envelope",
+      "name": "Build Demo Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        420
+      ],
+      "parameters": {
+        "jsCode": "const now = new Date();\nconst periodMonth = now.getMonth() + 1;\nconst periodYear = now.getFullYear();\nreturn [{\n  json: {\n    triggerMode: 'manual',\n    sourceType: 'inventory',\n    sourceParty: 'manual_admin',\n    channel: 'alfamart',\n    periodMonth,\n    periodYear,\n    fileName: `demo-inventory-${periodYear}-${String(periodMonth).padStart(2, '0')}.json`,\n    fileExtension: 'json',\n    mimeType: 'application/json',\n    fileSizeBytes: 0,\n    fileChecksum: `demo|inventory|alfamart|${periodYear}|${periodMonth}`,\n    uploadedBy: 'n8n-manual-trigger',\n    receivedAt: now.toISOString(),\n    inlineRecords: [\n      {\n        channel: 'alfamart',\n        regionCode: 'JABAR',\n        branchCode: 'BDG01',\n        outletCode: 'ALF-001',\n        skuCode: 'FOX-PREMIUM',\n        openingStock: 220,\n        closingStock: 0,\n        stockSnapshotDate: now.toISOString().slice(0, 10)\n      },\n      {\n        channel: 'alfamart',\n        regionCode: 'JATIM',\n        branchCode: 'SBY01',\n        outletCode: 'ALF-923',\n        skuCode: 'FOX-ROCKET',\n        openingStock: 4100,\n        closingStock: 6400,\n        stockSnapshotDate: now.toISOString().slice(0, 10)\n      },\n      {\n        channel: 'alfamart',\n        regionCode: 'DKI',\n        branchCode: 'JKT01',\n        outletCode: 'ALF-145',\n        skuCode: 'FOX-ZENITH',\n        openingStock: 1200,\n        closingStock: 980,\n        stockSnapshotDate: now.toISOString().slice(0, 10)\n      }\n    ]\n  }\n}];"
+      }
+    },
+    {
+      "id": "e2e-normalize-envelope",
+      "name": "Normalize Envelope",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        320
+      ],
+      "parameters": {
+        "jsCode": "const input = $input.first();\nconst j = input.json;\nconst allowedSourceTypes = ['sell_in', 'sell_out', 'inventory', 'payment'];\nconst allowedSourceParties = ['koprindo', 'gunawan_elektro', 'ritel_modern', 'konsultan', 'manual_admin'];\nconst allowedChannels = ['alfamart', 'indomaret', 'aksesmu', 'all'];\nconst createUuid = () => {\n  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {\n    const r = Math.random() * 16 | 0;\n    const v = c === 'x' ? r : (r & 0x3 | 0x8);\n    return v.toString(16);\n  });\n};\nif (!allowedSourceTypes.includes(j.sourceType)) {\n  throw new Error(`sourceType wajib salah satu dari: ${allowedSourceTypes.join(', ')}`);\n}\nconst hasInlineRecords = Array.isArray(j.inlineRecords) && j.inlineRecords.length > 0;\nconst hasBinary = !!input.binary?.data?.data;\nif (!hasInlineRecords && !hasBinary) {\n  throw new Error('Payload harus berisi records JSON atau file binary CSV/XLSX.');\n}\nconst periodMonth = Number(j.periodMonth);\nconst periodYear = Number(j.periodYear);\nif (!Number.isInteger(periodMonth) || periodMonth < 1 || periodMonth > 12) throw new Error('periodMonth tidak valid');\nif (!Number.isInteger(periodYear) || periodYear < 2020) throw new Error('periodYear tidak valid');\nreturn [{\n  json: {\n    ...j,\n    batchId: j.batchId || createUuid(),\n    sourceParty: allowedSourceParties.includes(j.sourceParty) ? j.sourceParty : 'manual_admin',\n    channel: allowedChannels.includes(j.channel) ? j.channel : 'all',\n    periodKey: `${periodYear}-${String(periodMonth).padStart(2, '0')}`,\n    stockoutThreshold: Number(process.env.KOPRINDO_STOCKOUT_THRESHOLD || 120),\n    overstockThreshold: Number(process.env.KOPRINDO_OVERSTOCK_THRESHOLD || 2800),\n    reconciliationWarning: Number(process.env.KOPRINDO_RECON_WARNING_THRESHOLD || 0.10),\n    reconciliationHigh: Number(process.env.KOPRINDO_RECON_HIGH_THRESHOLD || 0.20),\n    reconciliationCritical: Number(process.env.KOPRINDO_RECON_CRITICAL_THRESHOLD || 0.35),\n    paymentHighDays: Number(process.env.KOPRINDO_PAYMENT_HIGH_DAYS || 10),\n    paymentCriticalDays: Number(process.env.KOPRINDO_PAYMENT_CRITICAL_DAYS || 30)\n  },\n  binary: input.binary\n}];"
+      }
+    },
+    {
+      "id": "e2e-inline-records-if",
+      "name": "Inline Records Provided?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2e-inline-records-condition",
+              "leftValue": "={{ Array.isArray($json.inlineRecords) && $json.inlineRecords.length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e2e-explode-inline-records",
+      "name": "Explode Inline Records",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        220
+      ],
+      "parameters": {
+        "jsCode": "return ($json.inlineRecords || []).map((row) => ({ json: row }));"
+      }
+    },
+    {
+      "id": "e2e-read-spreadsheet",
+      "name": "Read Spreadsheet",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        420
+      ],
+      "parameters": {
+        "operation": "read",
+        "options": {}
+      }
+    },
+    {
+      "id": "e2e-transform-records",
+      "name": "Transform Rows To Canonical Records",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        320
+      ],
+      "parameters": {
+        "jsCode": "const envelope = $('Normalize Envelope').first().json;\nconst rows = $input.all().map((item) => item.json);\nif (!rows.length) throw new Error('Tidak ada baris data yang berhasil dibaca.');\nconst normalizeRow = (row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [String(key).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_'), value]));\nconst pick = (row, keys, fallback = null) => {\n  for (const key of keys) {\n    if (row[key] !== undefined && row[key] !== null && row[key] !== '') return row[key];\n  }\n  return fallback;\n};\nconst toText = (value, fallback = '') => value === undefined || value === null ? fallback : String(value).trim();\nconst toNumber = (value, fallback = 0) => {\n  if (value === undefined || value === null || value === '') return fallback;\n  const normalized = String(value).replace(/,/g, '').replace(/\\s+/g, '');\n  const parsed = Number(normalized);\n  return Number.isFinite(parsed) ? parsed : fallback;\n};\nconst toDate = (value) => {\n  if (value === undefined || value === null || value === '') return null;\n  const date = new Date(value);\n  if (Number.isNaN(date.getTime())) return null;\n  return date.toISOString().slice(0, 10);\n};\nconst dayDiff = (dateString) => {\n  if (!dateString) return 0;\n  const today = new Date();\n  today.setHours(0, 0, 0, 0);\n  const target = new Date(dateString);\n  target.setHours(0, 0, 0, 0);\n  return Math.max(0, Math.floor((today - target) / 86400000));\n};\nconst agingBucket = (days) => {\n  if (days <= 30) return '0_30';\n  if (days <= 45) return '31_45';\n  if (days <= 60) return '46_60';\n  return '61_plus';\n};\nconst normalizeParty = (value, fallback) => {\n  const allowed = ['koprindo', 'gunawan_elektro', 'ritel_modern', 'konsultan', 'manual_admin'];\n  const candidate = toText(value, fallback).toLowerCase();\n  return allowed.includes(candidate) ? candidate : fallback;\n};\nconst records = rows.map((rawRow, index) => {\n  const row = normalizeRow(rawRow);\n  if (envelope.sourceType === 'sell_in') {\n    return {\n      periodKey: envelope.periodKey,\n      channel: toText(pick(row, ['channel']), envelope.channel).toLowerCase(),\n      regionCode: toText(pick(row, ['region_code', 'region', 'wilayah']), 'UNKNOWN_REGION'),\n      branchCode: toText(pick(row, ['branch_code', 'branch', 'cabang']), 'UNKNOWN_BRANCH'),\n      outletCode: toText(pick(row, ['outlet_code', 'outlet', 'outlet_id']), 'UNKNOWN_OUTLET'),\n      skuCode: toText(pick(row, ['sku_code', 'sku', 'sku_id']), `ROW_${index + 1}`),\n      qtySellIn: toNumber(pick(row, ['qty_sell_in', 'sell_in_qty', 'qty']), 0),\n      shipmentDate: toDate(pick(row, ['shipment_date', 'delivery_date', 'tgl_kirim'])),\n      receiptDate: toDate(pick(row, ['receipt_date', 'received_date', 'tgl_terima'])),\n      rawRowRef: toText(pick(row, ['raw_row_ref']), `row_${index + 1}`)\n    };\n  }\n  if (envelope.sourceType === 'sell_out') {\n    return {\n      periodKey: envelope.periodKey,\n      channel: toText(pick(row, ['channel']), envelope.channel).toLowerCase(),\n      regionCode: toText(pick(row, ['region_code', 'region', 'wilayah']), 'UNKNOWN_REGION'),\n      branchCode: toText(pick(row, ['branch_code', 'branch', 'cabang']), 'UNKNOWN_BRANCH'),\n      outletCode: toText(pick(row, ['outlet_code', 'outlet', 'outlet_id']), 'UNKNOWN_OUTLET'),\n      skuCode: toText(pick(row, ['sku_code', 'sku', 'sku_id']), `ROW_${index + 1}`),\n      qtySellOut: toNumber(pick(row, ['qty_sell_out', 'sell_out_qty', 'qty']), 0),\n      salesAmount: toNumber(pick(row, ['sales_amount', 'amount', 'nilai_penjualan']), 0),\n      transactionCount: toNumber(pick(row, ['transaction_count', 'trx_count', 'jumlah_transaksi']), 0),\n      rawRowRef: toText(pick(row, ['raw_row_ref']), `row_${index + 1}`)\n    };\n  }\n  if (envelope.sourceType === 'inventory') {\n    return {\n      periodKey: envelope.periodKey,\n      channel: toText(pick(row, ['channel']), envelope.channel).toLowerCase(),\n      regionCode: toText(pick(row, ['region_code', 'region', 'wilayah']), 'UNKNOWN_REGION'),\n      branchCode: toText(pick(row, ['branch_code', 'branch', 'cabang']), 'UNKNOWN_BRANCH'),\n      outletCode: toText(pick(row, ['outlet_code', 'outlet', 'outlet_id']), 'UNKNOWN_OUTLET'),\n      skuCode: toText(pick(row, ['sku_code', 'sku', 'sku_id']), `ROW_${index + 1}`),\n      openingStock: toNumber(pick(row, ['opening_stock', 'stock_awal']), 0),\n      closingStock: toNumber(pick(row, ['closing_stock', 'stock_akhir', 'stock']), 0),\n      stockSnapshotDate: toDate(pick(row, ['stock_snapshot_date', 'snapshot_date', 'tgl_stok'])) || new Date().toISOString().slice(0, 10)\n    };\n  }\n  const invoiceDate = toDate(pick(row, ['invoice_date', 'tanggal_invoice'])) || new Date().toISOString().slice(0, 10);\n  const dueDate = toDate(pick(row, ['due_date', 'jatuh_tempo'])) || invoiceDate;\n  const paidAmount = toNumber(pick(row, ['paid_amount', 'jumlah_bayar']), 0);\n  const invoiceAmount = toNumber(pick(row, ['invoice_amount', 'amount', 'nilai_invoice']), 0);\n  const outstanding = Math.max(0, invoiceAmount - paidAmount);\n  let paymentStatus = 'unpaid';\n  if (outstanding <= 0) paymentStatus = 'paid';\n  else if (paidAmount > 0) paymentStatus = 'partial';\n  if (outstanding > 0 && dayDiff(dueDate) > 0) paymentStatus = 'overdue';\n  const agingDays = dayDiff(dueDate);\n  return {\n    periodKey: envelope.periodKey,\n    invoiceId: toText(pick(row, ['invoice_id', 'invoice_number', 'nomor_invoice']), `INV-${index + 1}`),\n    invoiceType: toText(pick(row, ['invoice_type', 'tipe_invoice']), 'retail_to_koprindo'),\n    payerParty: normalizeParty(pick(row, ['payer_party', 'payer']), envelope.sourceParty),\n    payeeParty: normalizeParty(pick(row, ['payee_party', 'payee']), 'koprindo'),\n    invoiceDate,\n    invoiceReceivedDate: toDate(pick(row, ['invoice_received_date', 'received_date'])),\n    dueDate,\n    invoiceAmount,\n    paidAmount,\n    lastPaymentDate: toDate(pick(row, ['last_payment_date', 'payment_date'])),\n    paymentStatus,\n    agingDays,\n    agingBucket: agingBucket(agingDays)\n  };\n});\nreturn [{\n  json: {\n    ...envelope,\n    records,\n    recordCount: records.length\n  }\n}];"
+      }
+    },
+    {
+      "id": "e2e-validate-score",
+      "name": "Validate And Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1860,
+        320
+      ],
+      "parameters": {
+        "jsCode": "const payload = $input.first().json;\nconst records = payload.records || [];\nif (!records.length) throw new Error('Batch tidak memiliki records.');\nlet blockingIssueCount = 0;\nlet warningIssueCount = 0;\nconst issues = [];\nfor (const record of records) {\n  if (payload.sourceType === 'payment') {\n    if (!record.invoiceId || !record.invoiceDate || !record.dueDate || record.invoiceAmount <= 0) {\n      blockingIssueCount += 1;\n      issues.push('Ada record payment tanpa invoiceId, invoiceDate, dueDate, atau invoiceAmount valid.');\n    }\n    if (record.paidAmount > record.invoiceAmount) {\n      warningIssueCount += 1;\n      issues.push('Ada record payment dengan paidAmount lebih besar dari invoiceAmount.');\n    }\n    continue;\n  }\n  if (!record.regionCode || !record.branchCode || !record.outletCode || !record.skuCode) {\n    blockingIssueCount += 1;\n    issues.push('Ada record operasional tanpa regionCode, branchCode, outletCode, atau skuCode lengkap.');\n  }\n  if (payload.sourceType === 'sell_in' && Number(record.qtySellIn) <= 0) {\n    warningIssueCount += 1;\n    issues.push('Ada record sell_in dengan qty <= 0.');\n  }\n  if (payload.sourceType === 'sell_out' && Number(record.qtySellOut) <= 0) {\n    warningIssueCount += 1;\n    issues.push('Ada record sell_out dengan qty <= 0.');\n  }\n  if (payload.sourceType === 'inventory' && Number(record.closingStock) < 0) {\n    warningIssueCount += 1;\n    issues.push('Ada record inventory dengan closingStock negatif.');\n  }\n}\nconst uniqueIssues = [...new Set(issues)];\nconst qualityScore = Math.max(0, 100 - (blockingIssueCount * 15) - (warningIssueCount * 3));\nconst qualityStatus = blockingIssueCount > 0 ? 'blocked' : (warningIssueCount > 0 || qualityScore < 90 ? 'provisional' : 'passed');\nconst registryValidationStatus = qualityStatus === 'blocked' ? 'rejected' : 'published';\nconst duplicateCheckQuery = `SELECT COUNT(*)::int AS duplicate_count, COALESCE(MAX(batch_id)::text, '') AS existing_batch_id FROM batch_registry WHERE source_type='${payload.sourceType}' AND file_checksum='${String(payload.fileChecksum).replace(/'/g, \"''\")}' AND period_month=${Number(payload.periodMonth)} AND period_year=${Number(payload.periodYear)};`;\nreturn [{\n  json: {\n    ...payload,\n    qualityScore: Number(qualityScore.toFixed(2)),\n    blockingIssueCount,\n    warningIssueCount,\n    qualityStatus,\n    registryValidationStatus,\n    reviewRequired: qualityStatus !== 'passed',\n    qualityNotes: uniqueIssues,\n    duplicateCheckQuery\n  }\n}];"
+      }
+    },
+    {
+      "id": "e2e-check-duplicate",
+      "name": "Check Duplicate Batch",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        2140,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $('Validate And Score').first().json.duplicateCheckQuery }}"
+      },
+      "notes": "Cek duplicate sederhana berdasarkan source_type + checksum + periode.",
+      "notesInFlow": true
+    },
+    {
+      "id": "e2e-duplicate-if",
+      "name": "Duplicate Batch?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2400,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2e-duplicate-condition",
+              "leftValue": "={{ Number($json.duplicate_count || 0) > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e2e-build-insert-sql",
+      "name": "Build Insert Transaction SQL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2680,
+        320
+      ],
+      "parameters": {
+        "jsCode": "const payload = $('Validate And Score').first().json;\nconst esc = (value) => String(value ?? '').replace(/'/g, \"''\");\nconst sqlText = (value) => value === undefined || value === null || value === '' ? 'NULL' : `'${esc(value)}'`;\nconst sqlNum = (value) => Number.isFinite(Number(value)) ? String(Number(value)) : '0';\nconst sqlDate = (value) => value ? `'${esc(value)}'` : 'NULL';\nconst queries = [];\nqueries.push('BEGIN;');\nqueries.push(`INSERT INTO batch_registry (batch_id, source_type, source_party, channel, period_month, period_year, file_name, file_checksum, file_size_bytes, received_at, validation_status, quality_score) VALUES ('${esc(payload.batchId)}', '${esc(payload.sourceType)}', '${esc(payload.sourceParty)}', ${sqlText(payload.channel)}, ${sqlNum(payload.periodMonth)}, ${sqlNum(payload.periodYear)}, '${esc(payload.fileName)}', '${esc(payload.fileChecksum)}', ${sqlNum(payload.fileSizeBytes)}, '${esc(payload.receivedAt)}', '${esc(payload.registryValidationStatus)}', ${sqlNum(payload.qualityScore)});`);\nqueries.push(`INSERT INTO data_quality_result (batch_id, quality_score, blocking_issue_count, warning_issue_count, review_required, quality_status, quality_notes) VALUES ('${esc(payload.batchId)}', ${sqlNum(payload.qualityScore)}, ${sqlNum(payload.blockingIssueCount)}, ${sqlNum(payload.warningIssueCount)}, ${payload.reviewRequired ? 'true' : 'false'}, '${esc(payload.qualityStatus)}', ${sqlText((payload.qualityNotes || []).join(' | '))});`);\nif (payload.qualityStatus !== 'blocked') {\n  if (payload.sourceType === 'sell_in') {\n    const values = payload.records.map((record) => `('${esc(payload.batchId)}', '${esc(record.periodKey)}', ${sqlText(record.channel)}, '${esc(record.regionCode)}', '${esc(record.branchCode)}', '${esc(record.outletCode)}', '${esc(record.skuCode)}', ${sqlNum(record.qtySellIn)}, ${sqlDate(record.shipmentDate)}, ${sqlDate(record.receiptDate)}, '${esc(record.rawRowRef)}')`).join(',\\n');\n    queries.push(`INSERT INTO sell_in_record (batch_id, period_key, channel, region_code, branch_code, outlet_code, sku_code, qty_sell_in, shipment_date, receipt_date, raw_row_ref) VALUES ${values};`);\n  }\n  if (payload.sourceType === 'sell_out') {\n    const values = payload.records.map((record) => `('${esc(payload.batchId)}', '${esc(record.periodKey)}', '${esc(record.channel)}', '${esc(record.regionCode)}', '${esc(record.branchCode)}', '${esc(record.outletCode)}', '${esc(record.skuCode)}', ${sqlNum(record.qtySellOut)}, ${sqlNum(record.salesAmount)}, ${sqlNum(record.transactionCount)}, '${esc(record.rawRowRef)}')`).join(',\\n');\n    queries.push(`INSERT INTO sell_out_record (batch_id, period_key, channel, region_code, branch_code, outlet_code, sku_code, qty_sell_out, sales_amount, transaction_count, raw_row_ref) VALUES ${values};`);\n  }\n  if (payload.sourceType === 'inventory') {\n    const values = payload.records.map((record) => `('${esc(payload.batchId)}', '${esc(record.periodKey)}', '${esc(record.channel)}', '${esc(record.regionCode)}', '${esc(record.branchCode)}', '${esc(record.outletCode)}', '${esc(record.skuCode)}', ${sqlNum(record.openingStock)}, ${sqlNum(record.closingStock)}, ${sqlDate(record.stockSnapshotDate)})`).join(',\\n');\n    queries.push(`INSERT INTO inventory_position (batch_id, period_key, channel, region_code, branch_code, outlet_code, sku_code, opening_stock, closing_stock, stock_snapshot_date) VALUES ${values};`);\n  }\n  if (payload.sourceType === 'payment') {\n    const values = payload.records.map((record) => `('${esc(payload.batchId)}', '${esc(record.invoiceId)}', '${esc(record.invoiceType)}', '${esc(record.payerParty)}', '${esc(record.payeeParty)}', ${sqlDate(record.invoiceDate)}, ${sqlDate(record.invoiceReceivedDate)}, ${sqlDate(record.dueDate)}, ${sqlNum(record.invoiceAmount)}, ${sqlNum(record.paidAmount)}, ${sqlDate(record.lastPaymentDate)}, '${esc(record.paymentStatus)}', ${sqlNum(record.agingDays)}, '${esc(record.agingBucket)}')`).join(',\\n');\n    queries.push(`INSERT INTO payment_record (batch_id, invoice_id, invoice_type, payer_party, payee_party, invoice_date, invoice_received_date, due_date, invoice_amount, paid_amount, last_payment_date, payment_status, aging_days, aging_bucket) VALUES ${values};`);\n  }\n}\nqueries.push('COMMIT;');\nreturn [{ json: { ...payload, dbInsertQuery: queries.join('\\n') } }];"
+      }
+    },
+    {
+      "id": "e2e-insert-batch-records",
+      "name": "Insert Batch And Records",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        2960,
+        320
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.dbInsertQuery }}"
+      },
+      "notes": "Menyimpan batch_registry, data_quality_result, dan records ke tabel operasional dalam satu transaksi.",
+      "notesInFlow": true
+    },
+    {
+      "id": "e2e-publishable-if",
+      "name": "Publishable Batch?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3240,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2e-publishable-condition",
+              "leftValue": "={{ ['passed', 'provisional'].includes($('Validate And Score').first().json.qualityStatus) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e2e-inventory-batch-if",
+      "name": "Inventory Batch?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3520,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2e-inventory-batch-condition",
+              "leftValue": "={{ $('Validate And Score').first().json.sourceType === 'inventory' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e2e-build-inventory-risks",
+      "name": "Build Inventory Risk Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3800,
+        120
+      ],
+      "parameters": {
+        "jsCode": "const payload = $('Validate And Score').first().json;\nconst events = [];\nfor (const record of payload.records || []) {\n  const entityKey = `${record.channel}:${record.branchCode}:${record.outletCode}:${record.skuCode}`;\n  const closingStock = Number(record.closingStock || 0);\n  if (closingStock <= Number(payload.stockoutThreshold || 0)) {\n    events.push({\n      periodKey: payload.periodKey,\n      riskType: 'stockout_risk',\n      severity: closingStock <= 0 ? 'critical' : 'high',\n      entityType: 'outlet',\n      entityKey,\n      metricName: 'closing_stock',\n      observedValue: closingStock,\n      thresholdValue: Number(payload.stockoutThreshold || 0),\n      status: 'open',\n      ownerRole: closingStock <= 0 ? 'management' : 'bd'\n    });\n    continue;\n  }\n  if (closingStock >= Number(payload.overstockThreshold || 5000)) {\n    events.push({\n      periodKey: payload.periodKey,\n      riskType: 'overstock_risk',\n      severity: closingStock >= Number(payload.overstockThreshold || 5000) * 1.5 ? 'critical' : 'high',\n      entityType: 'outlet',\n      entityKey,\n      metricName: 'closing_stock',\n      observedValue: closingStock,\n      thresholdValue: Number(payload.overstockThreshold || 5000),\n      status: 'open',\n      ownerRole: closingStock >= Number(payload.overstockThreshold || 5000) * 1.5 ? 'management' : 'bd'\n    });\n  }\n}\nreturn events.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "e2e-payment-batch-if",
+      "name": "Payment Batch?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3520,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2e-payment-batch-condition",
+              "leftValue": "={{ $('Validate And Score').first().json.sourceType === 'payment' }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e2e-build-payment-risks",
+      "name": "Build Payment Risk Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3800,
+        320
+      ],
+      "parameters": {
+        "jsCode": "const payload = $('Validate And Score').first().json;\nconst highDays = Number(payload.paymentHighDays || 7);\nconst criticalDays = Number(payload.paymentCriticalDays || 30);\nconst events = [];\nfor (const record of payload.records || []) {\n  const outstanding = Math.max(0, Number(record.invoiceAmount || 0) - Number(record.paidAmount || 0));\n  if (outstanding <= 0 || Number(record.agingDays || 0) <= 0) continue;\n  let severity = 'warning';\n  let thresholdValue = 1;\n  let riskType = 'payment_overdue';\n  if (Number(record.agingDays || 0) > criticalDays) {\n    severity = 'critical';\n    thresholdValue = criticalDays;\n    riskType = 'payment_aging_critical';\n  } else if (Number(record.agingDays || 0) > highDays) {\n    severity = 'high';\n    thresholdValue = highDays;\n  }\n  events.push({\n    periodKey: payload.periodKey,\n    riskType,\n    severity,\n    entityType: 'invoice',\n    entityKey: record.invoiceId,\n    metricName: 'overdue_days',\n    observedValue: Number(record.agingDays || 0),\n    thresholdValue,\n    status: 'open',\n    ownerRole: 'finance'\n  });\n}\nreturn events.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "e2e-reconciliation-if",
+      "name": "Sell Through Check Needed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3520,
+        520
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2e-reconciliation-condition",
+              "leftValue": "={{ ['sell_in', 'sell_out'].includes($('Validate And Score').first().json.sourceType) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e2e-query-reconciliation",
+      "name": "Query Reconciliation Snapshot",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        3800,
+        520
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ `SELECT COALESCE(si.period_key, so.period_key) AS period_key,\nCOALESCE(si.channel, so.channel) AS channel,\nCOALESCE(si.branch_code, so.branch_code) AS branch_code,\nCOALESCE(si.outlet_code, so.outlet_code) AS outlet_code,\nCOALESCE(si.sku_code, so.sku_code) AS sku_code,\nSUM(COALESCE(si.qty_sell_in, 0))::numeric AS total_in,\nSUM(COALESCE(so.qty_sell_out, 0))::numeric AS total_out\nFROM (SELECT * FROM sell_in_record WHERE period_key='${$('Validate And Score').first().json.periodKey}' AND channel='${$('Validate And Score').first().json.channel}') si\nFULL OUTER JOIN (SELECT * FROM sell_out_record WHERE period_key='${$('Validate And Score').first().json.periodKey}' AND channel='${$('Validate And Score').first().json.channel}') so\nON si.period_key = so.period_key\nAND si.channel = so.channel\nAND si.branch_code = so.branch_code\nAND si.outlet_code = so.outlet_code\nAND si.sku_code = so.sku_code\nGROUP BY 1,2,3,4,5\nHAVING SUM(COALESCE(si.qty_sell_in, 0)) > 0;` }}"
+      }
+    },
+    {
+      "id": "e2e-build-reconciliation-risks",
+      "name": "Build Reconciliation Risk Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4080,
+        520
+      ],
+      "parameters": {
+        "jsCode": "const payload = $('Validate And Score').first().json;\nconst warningThreshold = Number(payload.reconciliationWarning || 0.15);\nconst highThreshold = Number(payload.reconciliationHigh || 0.30);\nconst criticalThreshold = Number(payload.reconciliationCritical || 0.50);\nconst events = [];\nfor (const item of $input.all()) {\n  const totalIn = Number(item.json.total_in || 0);\n  const totalOut = Number(item.json.total_out || 0);\n  if (totalIn <= 0) continue;\n  const variance = Number(((totalIn - totalOut) / totalIn).toFixed(4));\n  if (variance < warningThreshold) continue;\n  let severity = 'warning';\n  let thresholdValue = warningThreshold;\n  let ownerRole = 'bd';\n  if (variance >= criticalThreshold) {\n    severity = 'critical';\n    thresholdValue = criticalThreshold;\n    ownerRole = 'management';\n  } else if (variance >= highThreshold) {\n    severity = 'high';\n    thresholdValue = highThreshold;\n    ownerRole = 'bd';\n  }\n  events.push({\n    periodKey: item.json.period_key,\n    riskType: 'sell_in_sell_out_mismatch',\n    severity,\n    entityType: 'outlet',\n    entityKey: `${item.json.channel}:${item.json.branch_code}:${item.json.outlet_code}:${item.json.sku_code}`,\n    metricName: 'variance_sell_in_sell_out_pct',\n    observedValue: variance,\n    thresholdValue,\n    status: 'open',\n    ownerRole\n  });\n}\nreturn events.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "e2e-query-sweep-payments",
+      "name": "Query Sweep Payment Exposure",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        520,
+        820
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT invoice_id, due_date, invoice_amount, paid_amount, aging_days, aging_bucket, to_char(CURRENT_DATE, 'YYYY-MM') AS period_key FROM payment_record WHERE payment_status IN ('unpaid', 'partial', 'overdue') AND invoice_amount > paid_amount AND due_date < CURRENT_DATE;"
+      }
+    },
+    {
+      "id": "e2e-build-sweep-payment-risks",
+      "name": "Build Sweep Payment Risk Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        820
+      ],
+      "parameters": {
+        "jsCode": "const highDays = Number(process.env.KOPRINDO_PAYMENT_HIGH_DAYS || 10);\nconst criticalDays = Number(process.env.KOPRINDO_PAYMENT_CRITICAL_DAYS || 30);\nconst events = [];\nfor (const item of $input.all()) {\n  const overdueDays = Number(item.json.aging_days || 0);\n  if (overdueDays <= 0) continue;\n  let severity = 'warning';\n  let thresholdValue = 1;\n  let riskType = 'payment_overdue';\n  if (overdueDays > criticalDays) {\n    severity = 'critical';\n    thresholdValue = criticalDays;\n    riskType = 'payment_aging_critical';\n  } else if (overdueDays > highDays) {\n    severity = 'high';\n    thresholdValue = highDays;\n  }\n  events.push({\n    periodKey: item.json.period_key,\n    riskType,\n    severity,\n    entityType: 'invoice',\n    entityKey: item.json.invoice_id,\n    metricName: 'overdue_days',\n    observedValue: overdueDays,\n    thresholdValue,\n    status: 'open',\n    ownerRole: 'finance'\n  });\n}\nreturn events.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "e2e-query-sweep-reconciliation",
+      "name": "Query Sweep Reconciliation Snapshot",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        520,
+        1040
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COALESCE(si.period_key, so.period_key) AS period_key, COALESCE(si.channel, so.channel) AS channel, COALESCE(si.branch_code, so.branch_code) AS branch_code, COALESCE(si.outlet_code, so.outlet_code) AS outlet_code, COALESCE(si.sku_code, so.sku_code) AS sku_code, SUM(COALESCE(si.qty_sell_in, 0))::numeric AS total_in, SUM(COALESCE(so.qty_sell_out, 0))::numeric AS total_out FROM sell_in_record si FULL OUTER JOIN sell_out_record so ON si.period_key = so.period_key AND si.channel = so.channel AND si.branch_code = so.branch_code AND si.outlet_code = so.outlet_code AND si.sku_code = so.sku_code WHERE COALESCE(si.period_key, so.period_key) = to_char(CURRENT_DATE, 'YYYY-MM') GROUP BY 1,2,3,4,5 HAVING SUM(COALESCE(si.qty_sell_in, 0)) > 0;"
+      }
+    },
+    {
+      "id": "e2e-build-sweep-reconciliation-risks",
+      "name": "Build Sweep Reconciliation Risk Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        1040
+      ],
+      "parameters": {
+        "jsCode": "const warningThreshold = Number(process.env.KOPRINDO_RECON_WARNING_THRESHOLD || 0.10);\nconst highThreshold = Number(process.env.KOPRINDO_RECON_HIGH_THRESHOLD || 0.20);\nconst criticalThreshold = Number(process.env.KOPRINDO_RECON_CRITICAL_THRESHOLD || 0.35);\nconst events = [];\nfor (const item of $input.all()) {\n  const totalIn = Number(item.json.total_in || 0);\n  const totalOut = Number(item.json.total_out || 0);\n  if (totalIn <= 0) continue;\n  const variance = Number(((totalIn - totalOut) / totalIn).toFixed(4));\n  if (variance < warningThreshold) continue;\n  let severity = 'warning';\n  let thresholdValue = warningThreshold;\n  let ownerRole = 'bd';\n  if (variance >= criticalThreshold) {\n    severity = 'critical';\n    thresholdValue = criticalThreshold;\n    ownerRole = 'management';\n  } else if (variance >= highThreshold) {\n    severity = 'high';\n    thresholdValue = highThreshold;\n  }\n  events.push({\n    periodKey: item.json.period_key,\n    riskType: 'sell_in_sell_out_mismatch',\n    severity,\n    entityType: 'outlet',\n    entityKey: `${item.json.channel}:${item.json.branch_code}:${item.json.outlet_code}:${item.json.sku_code}`,\n    metricName: 'variance_sell_in_sell_out_pct',\n    observedValue: variance,\n    thresholdValue,\n    status: 'open',\n    ownerRole\n  });\n}\nreturn events.map((json) => ({ json }));"
+      }
+    },
+    {
+      "id": "e2e-build-risk-insert-sql",
+      "name": "Build Risk Insert SQL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4360,
+        420
+      ],
+      "parameters": {
+        "jsCode": "const event = $json;\nconst esc = (value) => String(value ?? '').replace(/'/g, \"''\");\nconst observedValue = Number.isFinite(Number(event.observedValue)) ? Number(event.observedValue) : null;\nconst thresholdValue = Number.isFinite(Number(event.thresholdValue)) ? Number(event.thresholdValue) : null;\nconst query = `INSERT INTO risk_event (period_key, risk_type, severity, entity_type, entity_key, metric_name, observed_value, \"thresholdValue\", status, owner_role)\nSELECT '${esc(event.periodKey)}', '${esc(event.riskType)}', '${esc(event.severity)}', '${esc(event.entityType)}', '${esc(event.entityKey)}', '${esc(event.metricName)}', ${observedValue === null ? 'NULL' : observedValue}, ${thresholdValue === null ? 'NULL' : thresholdValue}, '${esc(event.status || 'open')}', '${esc(event.ownerRole || 'admin')}'\nWHERE NOT EXISTS (\n  SELECT 1 FROM risk_event\n  WHERE period_key='${esc(event.periodKey)}'\n    AND risk_type='${esc(event.riskType)}'\n    AND entity_key='${esc(event.entityKey)}'\n    AND status IN ('open', 'acknowledged')\n);`;\nreturn [{ json: { ...event, riskInsertQuery: query } }];"
+      }
+    },
+    {
+      "id": "e2e-insert-risk-event",
+      "name": "Insert Risk Event",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.3,
+      "position": [
+        4640,
+        420
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.riskInsertQuery }}"
+      }
+    },
+    {
+      "id": "e2e-high-critical-if",
+      "name": "High Or Critical?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4360,
+        660
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2e-high-critical-condition",
+              "leftValue": "={{ ['high', 'critical'].includes($json.severity) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e2e-wa-configured-if",
+      "name": "WhatsApp Configured?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        4640,
+        660
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e2e-wa-configured-condition",
+              "leftValue": "={{ Boolean(($env.META_WABA_PHONE_NUMBER_ID || '').trim() && ($env.META_WABA_ACCESS_TOKEN || '').trim() && (($json.severity === 'critical' ? ($env.OPS_WA_RECIPIENT_CRITICAL || '') : ($env.OPS_WA_RECIPIENT_HIGH || $env.OPS_WA_RECIPIENT_CRITICAL || '')).trim())) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e2e-compose-wa",
+      "name": "Compose WhatsApp Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4920,
+        660
+      ],
+      "parameters": {
+        "jsCode": "const event = $json;\nconst recipient = event.severity === 'critical'\n  ? (process.env.OPS_WA_RECIPIENT_CRITICAL || process.env.OPS_WA_RECIPIENT_HIGH || '')\n  : (process.env.OPS_WA_RECIPIENT_HIGH || process.env.OPS_WA_RECIPIENT_CRITICAL || '');\nconst severityLabel = String(event.severity || 'warning').toUpperCase();\nconst summary = `[${severityLabel}] ${event.riskType} terdeteksi pada ${event.entityKey}. Observed ${event.metricName}: ${event.observedValue}. Threshold: ${event.thresholdValue}.`;\nreturn [{\n  json: {\n    to: recipient,\n    messageBody: summary,\n    originalEvent: event\n  }\n}];"
+      }
+    },
+    {
+      "id": "e2e-send-wa",
+      "name": "Send WhatsApp Cloud API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5200,
+        660
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'https://graph.facebook.com/' + ($env.META_WABA_API_VERSION || 'v22.0') + '/' + $env.META_WABA_PHONE_NUMBER_ID + '/messages' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.META_WABA_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { messaging_product: 'whatsapp', to: $json.to, type: 'text', text: { preview_url: false, body: $json.messageBody } } }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook Intake": {
+      "main": [
+        [
+          {
+            "node": "Build Envelope From Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Demo Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Envelope From Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Demo Batch": {
+      "main": [
+        [
+          {
+            "node": "Normalize Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Envelope": {
+      "main": [
+        [
+          {
+            "node": "Inline Records Provided?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inline Records Provided?": {
+      "main": [
+        [
+          {
+            "node": "Explode Inline Records",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Read Spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Explode Inline Records": {
+      "main": [
+        [
+          {
+            "node": "Transform Rows To Canonical Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Spreadsheet": {
+      "main": [
+        [
+          {
+            "node": "Transform Rows To Canonical Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Rows To Canonical Records": {
+      "main": [
+        [
+          {
+            "node": "Validate And Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate And Score": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Batch": {
+      "main": [
+        [
+          {
+            "node": "Duplicate Batch?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate Batch?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Build Insert Transaction SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Insert Transaction SQL": {
+      "main": [
+        [
+          {
+            "node": "Insert Batch And Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Batch And Records": {
+      "main": [
+        [
+          {
+            "node": "Publishable Batch?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publishable Batch?": {
+      "main": [
+        [
+          {
+            "node": "Inventory Batch?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Payment Batch?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sell Through Check Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Inventory Batch?": {
+      "main": [
+        [
+          {
+            "node": "Build Inventory Risk Events",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Payment Batch?": {
+      "main": [
+        [
+          {
+            "node": "Build Payment Risk Events",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Sell Through Check Needed?": {
+      "main": [
+        [
+          {
+            "node": "Query Reconciliation Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Query Reconciliation Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Build Reconciliation Risk Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Inventory Risk Events": {
+      "main": [
+        [
+          {
+            "node": "Build Risk Insert SQL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "High Or Critical?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Payment Risk Events": {
+      "main": [
+        [
+          {
+            "node": "Build Risk Insert SQL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "High Or Critical?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reconciliation Risk Events": {
+      "main": [
+        [
+          {
+            "node": "Build Risk Insert SQL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "High Or Critical?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Risk Sweep": {
+      "main": [
+        [
+          {
+            "node": "Query Sweep Payment Exposure",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Query Sweep Reconciliation Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Sweep Payment Exposure": {
+      "main": [
+        [
+          {
+            "node": "Build Sweep Payment Risk Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Sweep Reconciliation Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Build Sweep Reconciliation Risk Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Sweep Payment Risk Events": {
+      "main": [
+        [
+          {
+            "node": "Build Risk Insert SQL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "High Or Critical?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Sweep Reconciliation Risk Events": {
+      "main": [
+        [
+          {
+            "node": "Build Risk Insert SQL",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "High Or Critical?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Risk Insert SQL": {
+      "main": [
+        [
+          {
+            "node": "Insert Risk Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Or Critical?": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Configured?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "WhatsApp Configured?": {
+      "main": [
+        [
+          {
+            "node": "Compose WhatsApp Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Compose WhatsApp Payload": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Cloud API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "koprindo-production-e2e-v1",
+    "templateCredsSetupCompleted": false
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  },
+  "tags": [
+    "koprindo",
+    "fox",
+    "production",
+    "intake",
+    "risk",
+    "payments"
+  ],
+  "active": false,
+  "versionId": "1b4b808a-9f46-4b51-9e88-f9440f557c1c"
+}

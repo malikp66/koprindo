@@ -1,0 +1,3 @@
+channel,region_code,branch_code,outlet_code,sku_code,qty_sell_out,sales_amount,transaction_count,raw_row_ref
+alfamart,JABAR,BDG01,ALF-001,FOX-PREMIUM,860,722400,214,row_1
+alfamart,JATIM,SBY01,ALF-923,FOX-ROCKET,540,729000,162,row_2

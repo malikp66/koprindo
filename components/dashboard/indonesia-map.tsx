@@ -78,7 +78,7 @@ export function buildProvinceMetric(name: string): ProvinceMetric {
   return {
     key: name,
     label: name,
-    revenue: `${units}K unit`,
+    revenue: `${units.toLocaleString("id-ID")} ribu unit`,
     growth: `${growthRaw >= 0 ? "+" : ""}${growthRaw.toFixed(1)}%`,
     coverage: `${coverage.toLocaleString("id-ID")} outlet`,
     returns: `${returns.toLocaleString("id-ID")} outlet`,
@@ -100,7 +100,7 @@ export function buildProvinceCityRanking(name: string, productName: string) {
         city,
         branch: `${city} ${branchSuffixes[index % branchSuffixes.length]}`,
         sellOutValue: unitBase,
-        sellOut: `${unitBase.toLocaleString("id-ID")}K unit`,
+        sellOut: `${unitBase.toLocaleString("id-ID")} ribu unit`,
         growth: `${growthRaw >= 0 ? "+" : ""}${growthRaw.toFixed(1)}%`,
         activeOutlets: `${activeOutlets.toLocaleString("id-ID")} outlet`,
         note: `${productName} paling kuat di area ${city}`,
