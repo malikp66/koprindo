@@ -7,6 +7,7 @@ import {
   BrainCircuit,
   BellRing,
   Menu,
+  MoonStar,
   UserCircle2,
   Boxes,
   CheckCircle2,
@@ -14,6 +15,7 @@ import {
   PackageSearch,
   Siren,
   Sparkles,
+  SunMedium,
   WalletCards,
 } from "lucide-react";
 import { useDemoConsole } from "@/components/dashboard/demo-console-provider";
@@ -77,8 +79,26 @@ export function LayoutHeader({
   const { roleLabel } = useDemoConsole();
   const [notificationOpen, setNotificationOpen] = React.useState(false);
   const [aiInsightOpen, setAiInsightOpen] = React.useState(false);
+  const [themeMode, setThemeMode] = React.useState<"dark" | "light">("dark");
   const unreadCount = operationalAlerts.length + 1;
   const aiInsightCount = aiNotifications.length;
+
+  React.useEffect(() => {
+    const currentTheme =
+      typeof document !== "undefined" &&
+      (document.documentElement.dataset.theme === "light" || document.documentElement.dataset.theme === "dark")
+        ? (document.documentElement.dataset.theme as "dark" | "light")
+        : "dark";
+    setThemeMode(currentTheme);
+    document.documentElement.classList.add("theme-ready");
+  }, []);
+
+  const toggleTheme = React.useCallback(() => {
+    const nextTheme = themeMode === "dark" ? "light" : "dark";
+    setThemeMode(nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+    window.localStorage.setItem("koprindo-theme", nextTheme);
+  }, [themeMode]);
 
   return (
     <>
@@ -98,14 +118,14 @@ export function LayoutHeader({
       </div>
 
       <div className="flex min-w-0 xl:justify-center">
-        <div className="hidden w-fit rounded-full border border-border/70 bg-card p-1 shadow-soft lg:flex">
+        <div className="hidden h-14 w-fit items-center rounded-full border border-border/70 bg-card px-2 shadow-soft lg:flex">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-full px-5 py-2 text-sm font-medium transition-all duration-200 ${active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"}`}
+                className={`flex h-10 items-center rounded-full px-5 text-sm font-medium transition-all duration-200 ${active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {item.title}
               </Link>
@@ -114,37 +134,66 @@ export function LayoutHeader({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 xl:justify-end">
-        <Button variant="outline" size="icon" title="Notifikasi" className="relative" onClick={() => setNotificationOpen(true)}>
-          <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
-            {unreadCount}
-          </span>
-          <BellRing className="h-4 w-4" />
-        </Button>
-
-        <Button
-          type="button"
-          title="AI Insight"
-          onClick={() => setAiInsightOpen(true)}
-          className="group relative h-11 rounded-full bg-accent px-3.5 text-foreground shadow-soft transition-all hover:bg-secondary"
-        >
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/14 text-primary ring-1 ring-primary/15">
-              <Sparkles className="h-4.5 w-4.5" />
+      <div className="flex flex-wrap items-center justify-between gap-3 xl:justify-end">
+        <div className="grid h-14 grid-cols-3 items-center gap-3 rounded-full border border-border/70 bg-card/95 px-3 shadow-soft">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Notifikasi"
+            aria-label="Buka notifikasi operasional"
+            className="relative h-10 w-10 rounded-full bg-transparent text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
+            onClick={() => setNotificationOpen(true)}
+          >
+            <span className="absolute right-0 top-0 inline-flex h-5 min-w-5 translate-x-[18%] -translate-y-[12%] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold leading-none text-white">
+              {unreadCount}
             </span>
-            <div className="hidden text-left sm:block">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
-                AI Insight
-              </div>
-              <div className="text-xs text-muted-foreground">Prioritas admin</div>
-            </div>
-          </div>
-          <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground shadow-sm">
-            {aiInsightCount}
-          </span>
-        </Button>
+            <BellRing className="h-4.5 w-4.5" />
+          </Button>
 
-        <div className="ml-1 flex items-center gap-3 rounded-full border border-border/70 bg-card px-4 py-2 shadow-soft">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title="AI Insight"
+            aria-label="Buka AI Insight"
+            onClick={() => setAiInsightOpen(true)}
+            className="relative h-10 w-10 rounded-full bg-transparent text-primary transition-all hover:bg-accent hover:text-primary"
+          >
+            <span className="absolute right-0 top-0 inline-flex h-5 min-w-5 translate-x-[18%] -translate-y-[12%] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold leading-none text-primary-foreground shadow-sm">
+              {aiInsightCount}
+            </span>
+            <Sparkles className="h-4.5 w-4.5" />
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title={themeMode === "dark" ? "Ganti ke light mode" : "Ganti ke dark mode"}
+            aria-label={themeMode === "dark" ? "Ganti ke light mode" : "Ganti ke dark mode"}
+            onClick={toggleTheme}
+            className="h-10 w-10 rounded-full bg-transparent text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
+          >
+            <span className="relative flex h-5 w-5 items-center justify-center overflow-hidden">
+              <MoonStar
+                className={`absolute h-4.5 w-4.5 transition-all duration-300 ${
+                  themeMode === "dark"
+                    ? "rotate-0 scale-100 opacity-100"
+                    : "-rotate-90 scale-75 opacity-0"
+                }`}
+              />
+              <SunMedium
+                className={`absolute h-4.5 w-4.5 transition-all duration-300 ${
+                  themeMode === "light"
+                    ? "rotate-0 scale-100 opacity-100"
+                    : "rotate-90 scale-75 opacity-0"
+                }`}
+              />
+            </span>
+          </Button>
+        </div>
+
+        <div className="flex h-14 items-center gap-3 rounded-full border border-border/70 bg-card px-4 shadow-soft">
           <UserCircle2 className="h-7 w-7 text-muted-foreground" />
           <div className="hidden pr-1 text-left text-sm leading-tight sm:block">
             <div className="font-medium text-foreground">Ruang kerja {roleLabel}</div>
@@ -228,7 +277,7 @@ export function LayoutHeader({
                 Insight ini merangkum kombinasi payment aging, stock risk, mismatch distribusi, dan kualitas batch yang paling perlu perhatian admin.
               </p>
             </div>
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/14 text-primary ring-1 ring-primary/15 xl:h-12 xl:w-12">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/14 text-primary xl:h-12 xl:w-12">
               <BrainCircuit className="h-5 w-5 xl:h-5.5 xl:w-5.5" />
             </div>
           </div>
@@ -243,7 +292,7 @@ export function LayoutHeader({
             {aiNotifications.map((item) => (
               <div key={item.title} className="rounded-2xl border border-border/70 bg-card p-4 xl:p-5">
                 <div className="flex items-start gap-3.5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/14 text-primary ring-1 ring-primary/15 xl:h-11 xl:w-11">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/14 text-primary xl:h-11 xl:w-11">
                     <Sparkles className="h-4.5 w-4.5 xl:h-5 xl:w-5" />
                   </div>
                   <div className="min-w-0 flex-1">

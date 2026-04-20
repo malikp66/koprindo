@@ -250,12 +250,12 @@ export default function MonitoringPage() {
               <CardDescription>Ringkasan skor dan catatan penting performa distribusi pada periode aktif.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950 p-5 text-slate-100">
+              <div className="rounded-2xl border border-border/70 bg-accent/80 p-5 text-foreground">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-medium text-slate-400">Status saat ini</p>
+                    <p className="text-xs font-medium text-muted-foreground">Status saat ini</p>
                     <h3 className="mt-3 text-xl font-semibold">{pksEvaluation.status}</h3>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-300">{pksEvaluation.summary}</p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{pksEvaluation.summary}</p>
                   </div>
                   <Badge variant="warning">{pksEvaluation.status}</Badge>
                 </div>

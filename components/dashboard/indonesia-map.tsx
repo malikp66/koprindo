@@ -234,24 +234,24 @@ export function IndonesiaMap({ activeProvince, onProvinceSelect }: IndonesiaMapP
 
   const hoveredStyle = hoveredProvinceKey ? `
     .indonesia-map-svg path[data-province="${hoveredProvinceKey.replace(/"/g, '\\"')}"] {
-      fill: #3f3530;
-      stroke: #f28c38;
+      fill: hsl(var(--map-hover-fill));
+      stroke: hsl(var(--map-hover-stroke));
       stroke-width: 1.4;
     }
   ` : "";
 
   const selectedStyle = selectedProvinceKey ? `
     .indonesia-map-svg path[data-province="${selectedProvinceKey.replace(/"/g, '\\"')}"] {
-      fill: #f28c38 !important;
-      stroke: #ffb26f !important;
+      fill: hsl(var(--map-selected-fill)) !important;
+      stroke: hsl(var(--map-selected-stroke)) !important;
       stroke-width: 1.8 !important;
     }
   ` : "";
 
   const mapStyles = `
     .indonesia-map-svg path[data-province] {
-      fill: #263142;
-      stroke: #3c475b;
+      fill: hsl(var(--map-fill));
+      stroke: hsl(var(--map-stroke));
       stroke-width: 1;
       cursor: pointer;
       outline: none;
@@ -265,7 +265,7 @@ export function IndonesiaMap({ activeProvince, onProvinceSelect }: IndonesiaMapP
   return (
     <div
       ref={containerRef}
-      className="relative min-h-[360px] overflow-hidden rounded-[1.8rem] bg-[hsl(223_18%_14%)] ring-1 ring-white/5"
+      className="app-map-surface relative min-h-[360px] overflow-hidden rounded-[1.8rem]"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
@@ -277,7 +277,7 @@ export function IndonesiaMap({ activeProvince, onProvinceSelect }: IndonesiaMapP
       />
       {tooltip ? (
         <div
-          className="pointer-events-none absolute z-10 w-[190px] -translate-x-1/2 -translate-y-full rounded-[1.1rem] border border-border/70 bg-popover px-4 py-3 shadow-[0_20px_45px_rgba(0,0,0,0.45)] transition-all duration-100 ease-out"
+          className="chart-tooltip-surface pointer-events-none absolute z-10 w-[190px] -translate-x-1/2 -translate-y-full rounded-[1.1rem] border border-border/70 bg-popover px-4 py-3 transition-all duration-100 ease-out"
           style={{
             left: tooltip.x,
             top: tooltip.y,

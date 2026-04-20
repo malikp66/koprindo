@@ -17,7 +17,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="shell-panel mx-auto flex min-h-[calc(100vh-1.5rem)] max-w-[1660px] overflow-hidden md:min-h-[calc(100vh-2.5rem)]">
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/25 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-background/72 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
         >
           <div onClick={(event) => event.stopPropagation()}>

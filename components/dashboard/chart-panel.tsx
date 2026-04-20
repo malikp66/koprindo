@@ -135,7 +135,7 @@ export function SelloutChartPanel() {
             barGap={2}
             className="focus:outline-none [&_path]:outline-none [&_rect]:outline-none"
           >
-            <CartesianGrid vertical={false} stroke="hsl(222 15% 22%)" strokeDasharray="3 3" />
+            <CartesianGrid vertical={false} stroke="hsl(var(--chart-grid))" strokeDasharray="3 3" />
             <YAxis
               domain={[0, 45000]}
               tickCount={6}
